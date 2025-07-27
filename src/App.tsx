@@ -12,7 +12,7 @@ import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
 import Discovery from "./pages/Discovery";
 import Account from "./pages/Account";
-import Benchtop from "./pages/Benchtop";
+import BenchTop from "./pages/Benchtop";
 import BenchMate from "./pages/BenchMate";
 import NotFound from "./pages/NotFound";
 
@@ -33,7 +33,7 @@ const App = () => (
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/discovery" element={<ProtectedRoute><Discovery /></ProtectedRoute>} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-              <Route path="/benchtop" element={<ProtectedRoute><Benchtop /></ProtectedRoute>} />
+              <Route path="/benchtop" element={<ProtectedRoute><BenchTop /></ProtectedRoute>} />
               <Route path="/benchmate" element={<ProtectedRoute><BenchMate /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 const navigationItems = [
   { title: 'Dashboard', url: '/dashboard', icon: Home },
   { title: 'Discovery', url: '/discovery', icon: BookOpen },
-  { title: 'Benchtop', url: '/benchtop', icon: Microscope },
+  { title: 'BenchTop', url: '/benchtop', icon: Microscope },
   { title: 'BenchMate', url: '/benchmate', icon: Bot },
 ];
 

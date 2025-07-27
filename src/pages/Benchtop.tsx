@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Microscope, Beaker, Calendar, Timer } from 'lucide-react';
 
-const Benchtop = () => {
+const BenchTop = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -13,7 +13,7 @@ const Benchtop = () => {
           <header className="h-14 border-b bg-background flex items-center px-4">
             <SidebarTrigger />
             <div className="ml-4">
-              <h1 className="text-lg font-semibold">Benchtop</h1>
+              <h1 className="text-lg font-semibold">BenchTop</h1>
             </div>
           </header>
 
@@ -148,7 +148,7 @@ const Benchtop = () => {
                 <CardContent className="pt-6">
                   <h3 className="text-lg font-semibold mb-2">Get Early Access</h3>
                   <p className="text-muted-foreground mb-4">
-                    Be the first to know when Benchtop launches. We're building powerful laboratory 
+                    Be the first to know when the BenchTop launches. We're building powerful laboratory 
                     management tools designed by researchers, for researchers.
                   </p>
                   <Badge variant="outline">
@@ -164,4 +164,4 @@ const Benchtop = () => {
   );
 };
 
-export default Benchtop;
+export default BenchTop;

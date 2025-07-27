@@ -71,10 +71,10 @@ const Dashboard = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center space-x-2">
                     <Bot className="h-5 w-5 text-primary" />
-                    <span>BenchMate AI</span>
+                    <span>BenchMate</span>
                   </CardTitle>
                   <CardDescription>
-                    Your intelligent research assistant powered by AI
+                    Your intelligent research co-pilot
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
