@@ -14,7 +14,162 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      article_category_maps: {
+        Row: {
+          article_id: string
+          category_id: string
+        }
+        Insert: {
+          article_id: string
+          category_id: string
+        }
+        Update: {
+          article_id?: string
+          category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_category_maps_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_category_maps_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      article_tag_maps: {
+        Row: {
+          article_id: string
+          tag_id: number
+        }
+        Insert: {
+          article_id: string
+          tag_id: number
+        }
+        Update: {
+          article_id?: string
+          tag_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_tag_maps_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_tag_maps_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      articles: {
+        Row: {
+          created_at: string
+          id: string
+          journal_name: string | null
+          link: string
+          publication_date: string | null
+          summary: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          journal_name?: string | null
+          link: string
+          publication_date?: string | null
+          summary?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          journal_name?: string | null
+          link?: string
+          publication_date?: string | null
+          summary?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          description: string | null
+          id: string
+          level_1_discipline: string
+          level_2_field: string
+          level_3_specialization: string | null
+          level_4_subspecialization: string | null
+        }
+        Insert: {
+          description?: string | null
+          id: string
+          level_1_discipline: string
+          level_2_field: string
+          level_3_specialization?: string | null
+          level_4_subspecialization?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          level_1_discipline?: string
+          level_2_field?: string
+          level_3_specialization?: string | null
+          level_4_subspecialization?: string | null
+        }
+        Relationships: []
+      }
+      tags: {
+        Row: {
+          id: number
+          name: string
+        }
+        Insert: {
+          id?: number
+          name: string
+        }
+        Update: {
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          discovery_feed_settings: Json | null
+          id: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discovery_feed_settings?: Json | null
+          id?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discovery_feed_settings?: Json | null
+          id?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
