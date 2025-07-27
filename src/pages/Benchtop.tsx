@@ -26,8 +26,7 @@ const Benchtop = () => {
               </div>
               <h2 className="text-4xl font-bold mb-4">Laboratory Management Suite</h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Powerful tools for managing your laboratory experiments, protocols, and research workflows. 
-                Coming soon to streamline your scientific research process.
+                BenchTop is your intelligent research workbench, powered by AI to help with data analysis, literature reviews, and generating insights. Coming soon.
               </p>
               <Badge variant="secondary" className="mt-4">
                 Coming Soon

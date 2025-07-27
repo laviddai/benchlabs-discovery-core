@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Microscope, BookOpen, Users, ArrowRight } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const Landing = () => {
   return (
@@ -13,6 +14,7 @@ const Landing = () => {
             <span className="text-2xl font-bold text-foreground">BenchLabs</span>
           </div>
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <Button variant="ghost" asChild>
               <Link to="/sign-in">Sign In</Link>
             </Button>
@@ -30,8 +32,7 @@ const Landing = () => {
             Accelerate Your Scientific Research
           </h1>
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-            BenchLabs is an integrated platform for scientific research, providing powerful tools for discovery, 
-            collaboration, and innovation. Join thousands of researchers advancing science together.
+            Our vision for BenchLabs is to build an 'Operating System for Science' that gives researchers the modern workflow they need, within an ecosystem where they can collaborate instantly. We're not just building a better tool; we're building the platform where the next generation of scientific breakthroughs will be analyzed, shared, and accelerated.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild className="text-lg px-8 py-6">
@@ -78,9 +79,9 @@ const Landing = () => {
           
           <div className="text-center p-6 rounded-lg border bg-card">
             <Users className="h-12 w-12 text-primary mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">BenchMate AI</h3>
+            <h3 className="text-xl font-semibold mb-2">BenchMate</h3>
             <p className="text-muted-foreground">
-              Your intelligent research assistant powered by AI to help with analysis, literature reviews, and insights.
+              Your social research platform for collaboration and community engagement.
             </p>
           </div>
         </div>

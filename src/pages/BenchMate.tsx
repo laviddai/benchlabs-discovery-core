@@ -13,7 +13,7 @@ const BenchMate = () => {
           <header className="h-14 border-b bg-background flex items-center px-4">
             <SidebarTrigger />
             <div className="ml-4">
-              <h1 className="text-lg font-semibold">BenchMate AI</h1>
+              <h1 className="text-lg font-semibold">BenchMate</h1>
             </div>
           </header>
 
@@ -24,10 +24,9 @@ const BenchMate = () => {
                   <Bot className="h-16 w-16 text-primary" />
                 </div>
               </div>
-              <h2 className="text-4xl font-bold mb-4">Your AI Research Assistant</h2>
+              <h2 className="text-4xl font-bold mb-4">Your Social Research Platform</h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Powered by advanced AI, BenchMate helps accelerate your research with intelligent insights, 
-                automated analysis, and smart recommendations tailored to your scientific work.
+                BenchMate is the social side of scientific research, connecting researchers worldwide for collaboration, knowledge sharing, and community building.
               </p>
               <Badge variant="secondary" className="mt-4">
                 Coming Soon

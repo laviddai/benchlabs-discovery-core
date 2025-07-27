@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { BookOpen, Home, User, Microscope, Bot, LogOut } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import {
   Sidebar,
   SidebarContent,
@@ -97,6 +98,10 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <ThemeToggle />
+          {!collapsed && <span className="text-sm text-muted-foreground">Theme</span>}
+        </div>
         <Button
           variant="ghost"
           size="sm"
