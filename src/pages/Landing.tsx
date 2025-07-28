@@ -29,10 +29,10 @@ const Landing = () => {
       <section className="container mx-auto px-4 py-20 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Accelerate Your Scientific Research
+            Accelerate Scientific Breakthroughs
           </h1>
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-            Our vision for BenchLabs is to build an 'Operating System for Science' that gives researchers the modern workflow they need, within an ecosystem where they can collaborate instantly. We're not just building a better tool; we're building the platform where the next generation of scientific breakthroughs will be analyzed, shared, and accelerated.
+            Our vision for BenchLabs is to build an 'Ecosystem' that gives researchers the modern workflow they need to accelerate science. We're building the platform that unifies the entire research lifecycle: from initial discovery and deep analysis to seamless collaboration and global sharing
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild className="text-lg px-8 py-6">
@@ -71,7 +71,7 @@ const Landing = () => {
           
           <div className="text-center p-6 rounded-lg border bg-card">
             <Microscope className="h-12 w-12 text-primary mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Benchtop Tools</h3>
+            <h3 className="text-xl font-semibold mb-2">BenchTop</h3>
             <p className="text-muted-foreground">
               Powerful laboratory management and experiment tracking tools to streamline your research workflow.
             </p>
