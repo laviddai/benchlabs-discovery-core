@@ -1,9 +1,75 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { Microscope, BookOpen, Users, ArrowRight } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { ArticleCard } from '@/components/ArticleCard';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Article {
+  id: string;
+  title: string;
+  link: string;
+  summary?: string;
+  publication_date?: string;
+  journal_name?: string;
+  ticker_symbol?: string;
+  tags?: { name: string }[];
+  categories?: { level_1_discipline: string, level_2_field: string }[];
+}
 
 const Landing = () => {
+  const [recentArticles, setRecentArticles] = useState<Article[]>([]);
+  const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    fetchRecentArticles();
+  }, []);
+
+  const fetchRecentArticles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select(`
+          *,
+          article_tag_maps(
+            tags(name)
+          ),
+          article_category_maps(
+            categories(level_1_discipline, level_2_field)
+          )
+        `)
+        .order('publication_date', { ascending: false })
+        .limit(6);
+
+      if (error) {
+        console.error('Error fetching articles:', error);
+        return;
+      }
+
+      const transformedArticles = data?.map(article => ({
+        ...article,
+        tags: article.article_tag_maps?.map((tagMap: any) => ({ name: tagMap.tags?.name })).filter(Boolean) || [],
+        categories: article.article_category_maps?.map((catMap: any) => ({
+          level_1_discipline: catMap.categories?.level_1_discipline,
+          level_2_field: catMap.categories?.level_2_field
+        })).filter(Boolean) || []
+      })) || [];
+
+      setRecentArticles(transformedArticles);
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+    }
+  };
+
+  const handleNewsletterSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Implement newsletter signup
+    console.log('Newsletter signup:', email);
+    setEmail('');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
       {/* Navigation */}
@@ -87,14 +153,54 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Today's Discoveries Section */}
+      <section className="container mx-auto px-4 py-20 bg-muted/30">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4">Today's Discoveries</h2>
+          <p className="text-lg text-muted-foreground mb-8">
+            Explore the latest research papers and scientific breakthroughs
+          </p>
+          <Button asChild variant="outline">
+            <Link to="/discovery">View Full Discovery Feed</Link>
+          </Button>
+        </div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {recentArticles.map((article) => (
+            <ArticleCard key={article.id} {...article} />
+          ))}
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t bg-background/95">
         <div className="container mx-auto px-4 py-12">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="flex items-center space-x-2">
               <Microscope className="h-6 w-6 text-primary" />
               <span className="text-lg font-semibold">BenchLabs</span>
             </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Stay Updated</h3>
+              <p className="text-sm text-muted-foreground">
+                Get the latest scientific discoveries delivered to your inbox
+              </p>
+              <form onSubmit={handleNewsletterSignup} className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="flex-1"
+                />
+                <Button type="submit">Subscribe</Button>
+              </form>
+            </div>
+          </div>
+          
+          <div className="mt-8 pt-8 border-t text-center">
             <p className="text-sm text-muted-foreground">
               © 2024 BenchLabs. Advancing scientific research through innovation.
             </p>

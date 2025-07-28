@@ -1,7 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Clock, BookOpen } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ExternalLink, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ArticleCardProps {
@@ -11,86 +12,99 @@ interface ArticleCardProps {
   summary?: string;
   publication_date?: string;
   journal_name?: string;
-  tags?: string[];
-  categories?: string[];
+  ticker_symbol?: string;
+  tags?: { name: string }[] | string[];
+  categories?: { level_1_discipline: string, level_2_field: string }[] | string[];
 }
 
-export const ArticleCard = ({
-  title,
-  link,
-  summary,
-  publication_date,
+export const ArticleCard = ({ 
+  title, 
+  link, 
+  summary, 
+  publication_date, 
   journal_name,
-  tags = [],
-  categories = []
+  ticker_symbol,
+  tags,
+  categories 
 }: ArticleCardProps) => {
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Unknown date';
-    try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
-    } catch {
-      return 'Unknown date';
-    }
-  };
+  // Normalize tags to consistent format
+  const normalizedTags = tags?.map(tag => 
+    typeof tag === 'string' ? tag : tag.name
+  ).filter(Boolean) || [];
+
+  // Normalize categories to consistent format
+  const normalizedCategories = categories?.map(cat => 
+    typeof cat === 'string' ? cat : cat.level_1_discipline || cat.level_2_field
+  ).filter(Boolean) || [];
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg leading-tight mb-2 line-clamp-2">
+    <TooltipProvider>
+      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="text-lg leading-tight line-clamp-2">
               {title}
             </CardTitle>
-            {journal_name && (
-              <CardDescription className="flex items-center space-x-2">
-                <BookOpen className="h-4 w-4" />
-                <span className="font-medium">{journal_name}</span>
-                {publication_date && (
-                  <>
-                    <span>•</span>
-                    <span className="flex items-center space-x-1">
-                      <Clock className="h-3 w-3" />
-                      <span>{formatDate(publication_date)}</span>
-                    </span>
-                  </>
+            {ticker_symbol && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Badge variant="outline" className="shrink-0 text-xs">
+                    {ticker_symbol}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{journal_name}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            {journal_name && !ticker_symbol && (
+              <span className="font-medium">{journal_name}</span>
+            )}
+            {publication_date && (
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>
+                  {formatDistanceToNow(new Date(publication_date), { addSuffix: true })}
+                </span>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent className="flex-1 flex flex-col">
+          {summary && (
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">
+              {summary}
+            </p>
+          )}
+          
+          <div className="space-y-3">
+            {normalizedTags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {normalizedTags.slice(0, 3).map((tag, index) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+                {normalizedTags.length > 3 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{normalizedTags.length - 3} more
+                  </Badge>
                 )}
-              </CardDescription>
+              </div>
             )}
+            
+            <Button asChild size="sm" className="w-full">
+              <a href={link} target="_blank" rel="noopener noreferrer">
+                Read Paper
+                <ExternalLink className="ml-2 h-3 w-3" />
+              </a>
+            </Button>
           </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {summary && (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {summary}
-          </p>
-        )}
-
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {tags.slice(0, 4).map((tag, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {tag.replace(/_/g, ' ')}
-              </Badge>
-            ))}
-            {tags.length > 4 && (
-              <Badge variant="outline" className="text-xs">
-                +{tags.length - 4} more
-              </Badge>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <Button asChild size="sm">
-            <a href={link} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-1" />
-              Read Paper
-            </a>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 };

@@ -16,8 +16,9 @@ interface Article {
   summary?: string;
   publication_date?: string;
   journal_name?: string;
-  tags?: string[];
-  categories?: string[];
+  ticker_symbol?: string;
+  tags?: { name: string }[];
+  categories?: { level_1_discipline: string, level_2_field: string }[];
 }
 
 const Discovery = () => {
@@ -26,7 +27,7 @@ const Discovery = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const articlesPerPage = 12;
+  const articlesPerPage = 24;
 
   useEffect(() => {
     fetchArticles();
@@ -44,7 +45,7 @@ const Discovery = () => {
             tags(name)
           ),
           article_category_maps(
-            categories(id, level_3_specialization, level_4_subspecialization)
+            categories(id, level_1_discipline, level_2_field, level_3_specialization, level_4_subspecialization)
           )
         `)
         .order('publication_date', { ascending: false });
@@ -72,10 +73,11 @@ const Discovery = () => {
       // Transform the data to include tags and categories
       const transformedArticles = data?.map(article => ({
         ...article,
-        tags: article.article_tag_maps?.map((tagMap: any) => tagMap.tags?.name).filter(Boolean) || [],
-        categories: article.article_category_maps?.map((catMap: any) => 
-          catMap.categories?.level_3_specialization || catMap.categories?.id
-        ).filter(Boolean) || []
+        tags: article.article_tag_maps?.map((tagMap: any) => ({ name: tagMap.tags?.name })).filter(Boolean) || [],
+        categories: article.article_category_maps?.map((catMap: any) => ({
+          level_1_discipline: catMap.categories?.level_1_discipline,
+          level_2_field: catMap.categories?.level_2_field
+        })).filter(Boolean) || []
       })) || [];
 
       setArticles(transformedArticles);
@@ -125,7 +127,7 @@ const Discovery = () => {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-6 max-w-7xl">
               {/* Search Bar */}
               <div className="mb-6">
                 <div className="relative max-w-md">
@@ -149,14 +151,14 @@ const Discovery = () => {
 
               {/* Articles Grid */}
               {loading ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {Array.from({ length: 6 }).map((_, index) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {Array.from({ length: 24 }).map((_, index) => (
                     <div key={index} className="h-64 bg-muted animate-pulse rounded-lg"></div>
                   ))}
                 </div>
               ) : (
                 <>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     {paginatedArticles.map((article) => (
                       <ArticleCard key={article.id} {...article} />
                     ))}
