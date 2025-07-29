@@ -168,37 +168,49 @@ const Account = () => {
                 </CardContent>
               </Card>
 
-              {/* Discovery Feed Preferences */}
+              {/* Linked Accounts */}
               <Card className="lg:col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Settings className="h-5 w-5" />
-                    <span>Discovery Feed Preferences</span>
+                    <span>Linked Accounts</span>
                   </CardTitle>
                   <CardDescription>
-                    Customize your research discovery experience
+                    Connect your professional and social accounts for enhanced features
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Alert>
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <Button variant="outline" className="h-16 flex flex-col items-center justify-center space-y-2">
+                      <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                        OR
+                      </div>
+                      <span className="text-sm">Connect ORCID</span>
+                    </Button>
+                    
+                    <Button variant="outline" className="h-16 flex flex-col items-center justify-center space-y-2">
+                      <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                        IG
+                      </div>
+                      <span className="text-sm">Connect Instagram</span>
+                    </Button>
+                    
+                    <Button variant="outline" className="h-16 flex flex-col items-center justify-center space-y-2">
+                      <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                        in
+                      </div>
+                      <span className="text-sm">Connect LinkedIn</span>
+                    </Button>
+                  </div>
+                  
+                  <Alert className="mt-6">
                     <CheckCircle className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Coming Soon:</strong> Customize your feed by saving your favorite filters, 
-                      journals, and research topics. You'll be able to set up personalized alerts 
-                      and manage your research preferences here.
+                      <strong>Coming Soon:</strong> Link your professional profiles to automatically 
+                      import your publications, sync with your ORCID record, and share your research 
+                      discoveries on social platforms.
                     </AlertDescription>
                   </Alert>
-                  
-                  <div className="mt-6 p-4 border border-dashed rounded-lg bg-muted/50">
-                    <h4 className="font-medium mb-2">Future Features:</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• Save and manage custom category filters</li>
-                      <li>• Subscribe to specific journals and authors</li>
-                      <li>• Set up email alerts for new research</li>
-                      <li>• Bookmark and organize articles</li>
-                      <li>• Export your reading lists</li>
-                    </ul>
-                  </div>
                 </CardContent>
               </Card>
             </div>

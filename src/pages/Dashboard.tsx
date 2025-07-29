@@ -133,46 +133,73 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>
-                  Your latest research activities and updates
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm">
-                        Read "CRISPR-Cas9 Advances in Gene Therapy" from Nature Biotechnology
-                      </p>
-                      <p className="text-xs text-muted-foreground">2 hours ago</p>
+            {/* Discovery Feed Preferences and Recent Activity */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Discovery Feed Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <TrendingUp className="h-5 w-5" />
+                    <span>Discovery Feed Preferences</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Customize your research discovery experience
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="p-4 border border-dashed rounded-lg bg-muted/50">
+                    <h4 className="font-medium mb-2">Personalization Coming Soon:</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Save custom category filters</li>
+                      <li>• Subscribe to journals and authors</li>
+                      <li>• Set up research alerts</li>
+                      <li>• Bookmark and organize articles</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Activity */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>
+                    Your latest research activities and updates
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm">
+                          Read "CRISPR-Cas9 Advances in Gene Therapy" from Nature Biotechnology
+                        </p>
+                        <p className="text-xs text-muted-foreground">2 hours ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm">
+                          Saved article about quantum computing applications
+                        </p>
+                        <p className="text-xs text-muted-foreground">1 day ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <div className="w-2 h-2 bg-muted-foreground rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm">
+                          Updated research preferences for immunotherapy
+                        </p>
+                        <p className="text-xs text-muted-foreground">3 days ago</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm">
-                        Saved article about quantum computing applications
-                      </p>
-                      <p className="text-xs text-muted-foreground">1 day ago</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full mt-2"></div>
-                    <div>
-                      <p className="text-sm">
-                        Updated research preferences for immunotherapy
-                      </p>
-                      <p className="text-xs text-muted-foreground">3 days ago</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </main>
       </div>
