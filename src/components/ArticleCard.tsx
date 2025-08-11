@@ -2,10 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, Clock, Bookmark, BookmarkCheck, FolderPlus } from 'lucide-react';
+import { ExternalLink, Clock, Bookmark, BookmarkCheck, FolderPlus, Quote } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
 import { AddToCollectionDialog } from './AddToCollectionDialog';
+import { CitationModal } from './CitationModal';
+import { useState } from 'react';
 
 interface ArticleCardProps {
   id: string;
@@ -31,6 +33,7 @@ export const ArticleCard = ({
   categories 
 }: ArticleCardProps) => {
   const { toggleSaveArticle, isSaved, loading } = useSavedArticles();
+  const [citationModalOpen, setCitationModalOpen] = useState(false);
   
   // Normalize tags to consistent format
   const normalizedTags = tags?.map(tag => 
@@ -46,6 +49,18 @@ export const ArticleCard = ({
     toggleSaveArticle(id);
   };
 
+  const handleCitationCopy = (format: string) => {
+    // Track citation export for analytics
+    console.log(`Citation exported: ${format} for article ${id}`);
+  };
+
+  const citationData = {
+    title,
+    journal: journal_name,
+    publicationDate: publication_date,
+    url: link,
+  };
+
   return (
     <TooltipProvider>
       <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
@@ -55,6 +70,21 @@ export const ArticleCard = ({
               {title}
             </CardTitle>
             <div className="flex items-center gap-2 shrink-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCitationModalOpen(true)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Quote className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Cite article</p>
+                </TooltipContent>
+              </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <AddToCollectionDialog articleId={id}>
@@ -152,6 +182,13 @@ export const ArticleCard = ({
           </div>
         </CardContent>
       </Card>
+      
+      <CitationModal
+        open={citationModalOpen}
+        onOpenChange={setCitationModalOpen}
+        citationData={citationData}
+        onCitationCopy={handleCitationCopy}
+      />
     </TooltipProvider>
   );
 };
