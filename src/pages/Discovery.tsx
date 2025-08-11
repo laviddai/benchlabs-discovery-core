@@ -114,11 +114,6 @@ const Discovery = () => {
             </div>
           </header>
 
-          <div className="border-b">
-            <div className="max-w-7xl mx-auto">
-              <DiscoveryTicker />
-            </div>
-          </div>
 
           <div className="flex">
             {/* Left Sidebar - Filters */}
