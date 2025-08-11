@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
-import { DiscoveryTicker } from '@/components/DiscoveryTicker';
 import { CategoryFilter } from '@/components/CategoryFilter';
 import { ArticleCard } from '@/components/ArticleCard';
 import { Button } from '@/components/ui/button';
