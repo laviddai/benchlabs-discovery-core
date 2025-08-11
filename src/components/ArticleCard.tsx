@@ -2,9 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, Clock, Bookmark, BookmarkCheck } from 'lucide-react';
+import { ExternalLink, Clock, Bookmark, BookmarkCheck, FolderPlus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
+import { AddToCollectionDialog } from './AddToCollectionDialog';
 
 interface ArticleCardProps {
   id: string;
@@ -54,6 +55,22 @@ export const ArticleCard = ({
               {title}
             </CardTitle>
             <div className="flex items-center gap-2 shrink-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AddToCollectionDialog articleId={id}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                    >
+                      <FolderPlus className="h-4 w-4" />
+                    </Button>
+                  </AddToCollectionDialog>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add to collection</p>
+                </TooltipContent>
+              </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { BookOpen, Microscope, Bot, TrendingUp, Calendar, Bell } from 'lucide-react';
 import { SavedArticlesList } from '@/components/SavedArticlesList';
+import { CollectionsList } from '@/components/CollectionsList';
+import { CollectionDialog } from '@/components/CollectionDialog';
 import { useAuth } from '@/hooks/useAuth';
 
 const Dashboard = () => {
@@ -132,6 +134,15 @@ const Dashboard = () => {
                   </p>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Collections Section */}
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">My Collections</h2>
+                <CollectionDialog />
+              </div>
+              <CollectionsList />
             </div>
 
             {/* Saved Articles Section */}

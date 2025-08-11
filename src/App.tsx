@@ -14,6 +14,7 @@ import Discovery from "./pages/Discovery";
 import Account from "./pages/Account";
 import BenchTop from "./pages/Benchtop";
 import BenchMate from "./pages/BenchMate";
+import Collection from "./pages/Collection";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
               <Route path="/benchtop" element={<ProtectedRoute><BenchTop /></ProtectedRoute>} />
               <Route path="/benchmate" element={<ProtectedRoute><BenchMate /></ProtectedRoute>} />
+              <Route path="/collections/:id" element={<Collection />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
