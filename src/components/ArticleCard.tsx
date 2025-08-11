@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, Clock } from 'lucide-react';
+import { ExternalLink, Clock, Bookmark, BookmarkCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useSavedArticles } from '@/hooks/useSavedArticles';
 
 interface ArticleCardProps {
   id: string;
@@ -18,6 +19,7 @@ interface ArticleCardProps {
 }
 
 export const ArticleCard = ({ 
+  id,
   title, 
   link, 
   summary, 
@@ -27,6 +29,8 @@ export const ArticleCard = ({
   tags,
   categories 
 }: ArticleCardProps) => {
+  const { toggleSaveArticle, isSaved, loading } = useSavedArticles();
+  
   // Normalize tags to consistent format
   const normalizedTags = tags?.map(tag => 
     typeof tag === 'string' ? tag : tag.name
@@ -37,26 +41,52 @@ export const ArticleCard = ({
     typeof cat === 'string' ? cat : cat.level_1_discipline || cat.level_2_field
   ).filter(Boolean) || [];
 
+  const handleSaveClick = () => {
+    toggleSaveArticle(id);
+  };
+
   return (
     <TooltipProvider>
       <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg leading-tight line-clamp-2">
+            <CardTitle className="text-lg leading-tight line-clamp-2 flex-1">
               {title}
             </CardTitle>
-            {ticker_symbol && (
+            <div className="flex items-center gap-2 shrink-0">
               <Tooltip>
-                <TooltipTrigger>
-                  <Badge variant="outline" className="shrink-0 text-xs">
-                    {ticker_symbol}
-                  </Badge>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSaveClick}
+                    disabled={loading}
+                    className="h-8 w-8 p-0"
+                  >
+                    {isSaved(id) ? (
+                      <BookmarkCheck className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Bookmark className="h-4 w-4" />
+                    )}
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{journal_name}</p>
+                  <p>{isSaved(id) ? 'Remove from saved' : 'Save article'}</p>
                 </TooltipContent>
               </Tooltip>
-            )}
+              {ticker_symbol && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className="text-xs">
+                      {ticker_symbol}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{journal_name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             {journal_name && !ticker_symbol && (

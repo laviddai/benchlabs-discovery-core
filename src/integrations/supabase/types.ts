@@ -131,18 +131,105 @@ export type Database = {
         }
         Relationships: []
       }
+      ingestion_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string | null
+          log_id: number
+          source_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string | null
+          log_id?: number
+          source_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string | null
+          log_id?: number
+          source_url?: string | null
+        }
+        Relationships: []
+      }
+      ingestion_sources: {
+        Row: {
+          id: string
+          source_name: string | null
+          source_url: string
+          tags: string | null
+          ticker_symbol: string | null
+        }
+        Insert: {
+          id: string
+          source_name?: string | null
+          source_url: string
+          tags?: string | null
+          ticker_symbol?: string | null
+        }
+        Update: {
+          id?: string
+          source_name?: string | null
+          source_url?: string
+          tags?: string | null
+          ticker_symbol?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_sources_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_sources_ticker_symbol_fkey"
+            columns: ["ticker_symbol"]
+            isOneToOne: false
+            referencedRelation: "journal_metadata"
+            referencedColumns: ["ticker_symbol"]
+          },
+        ]
+      }
+      journal_metadata: {
+        Row: {
+          access_url: string | null
+          id: number
+          source_name: string
+          source_url: string | null
+          ticker_symbol: string | null
+        }
+        Insert: {
+          access_url?: string | null
+          id?: number
+          source_name: string
+          source_url?: string | null
+          ticker_symbol?: string | null
+        }
+        Update: {
+          access_url?: string | null
+          id?: number
+          source_name?: string
+          source_url?: string | null
+          ticker_symbol?: string | null
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           id: number
-          name: string
+          tags: string
         }
         Insert: {
           id?: number
-          name: string
+          tags: string
         }
         Update: {
           id?: number
-          name?: string
+          tags?: string
         }
         Relationships: []
       }
@@ -169,6 +256,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_saved_articles: {
+        Row: {
+          article_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_saved_articles_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

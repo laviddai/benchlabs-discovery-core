@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { BookOpen, Microscope, Bot, TrendingUp, Calendar, Bell } from 'lucide-react';
+import { SavedArticlesList } from '@/components/SavedArticlesList';
 import { useAuth } from '@/hooks/useAuth';
 
 const Dashboard = () => {
@@ -131,6 +132,11 @@ const Dashboard = () => {
                   </p>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Saved Articles Section */}
+            <div className="mb-8">
+              <SavedArticlesList />
             </div>
 
             {/* Discovery Feed Preferences and Recent Activity */}
