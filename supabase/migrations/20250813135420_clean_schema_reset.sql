@@ -1,67 +1,10 @@
 -- =====================================================
 -- BenchLabs Clean Migration - Complete Schema Reset
--- This replaces all previous migrations with a clean state
 -- =====================================================
 
--- 1. Articles table (your current structure + enhancements)
-CREATE TABLE IF NOT EXISTS public.articles (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  title TEXT NOT NULL,
-  link TEXT NOT NULL UNIQUE,
-  summary TEXT,
-  publication_date TIMESTAMP WITH TIME ZONE,
-  journal_name TEXT,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  
-  -- New columns for categorization
-  journal_id UUID, -- Will reference journals table
-  primary_category_id TEXT, -- Will reference categories table
-  content_summary TEXT, -- For AI analysis later
-  keywords TEXT[], -- Array of keywords
-  confidence_score DECIMAL(3,2) DEFAULT 1.00
-);
-
--- 2. User preferences table (your current structure)
-CREATE TABLE IF NOT EXISTS public.user_preferences (
-  id SERIAL PRIMARY KEY,
-  user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
-  discovery_feed_settings JSONB,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
-);
-
--- 3. Collections table (your current structure)
-CREATE TABLE IF NOT EXISTS public.collections (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL,
-  name TEXT NOT NULL,
-  description TEXT,
-  is_public BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
-);
-
--- 4. Collection articles table (your current structure)
-CREATE TABLE IF NOT EXISTS public.collection_articles (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  collection_id UUID NOT NULL REFERENCES public.collections(id) ON DELETE CASCADE,
-  article_id UUID NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE,
-  added_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  UNIQUE(collection_id, article_id)
-);
-
--- 5. User saved articles table (your current structure)
-CREATE TABLE IF NOT EXISTS public.user_saved_articles (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL,
-  article_id UUID NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  UNIQUE(user_id, article_id)
-);
-
--- 6. NEW: Categories table (your biological sciences taxonomy)
+-- 1. Categories table (create first for references)
 CREATE TABLE IF NOT EXISTS public.categories (
-  id TEXT PRIMARY KEY, -- e.g., 'BIO-APP-BIN-01'
+  id TEXT PRIMARY KEY,
   level_1_discipline TEXT NOT NULL,
   level_2_field TEXT NOT NULL,
   level_3_specialization TEXT NOT NULL,
@@ -70,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 7. NEW: Journals table (master list from your Google Sheets)
+-- 2. Journals table (create second for references)
 CREATE TABLE IF NOT EXISTS public.journals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   journal_name TEXT NOT NULL UNIQUE,
@@ -84,7 +27,7 @@ CREATE TABLE IF NOT EXISTS public.journals (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 8. NEW: Tags table (for future AI-generated tags)
+-- 3. Tags table
 CREATE TABLE IF NOT EXISTS public.tags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE,
@@ -94,18 +37,72 @@ CREATE TABLE IF NOT EXISTS public.tags (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 9. NEW: Article-Category mapping (many-to-many)
+-- 4. Articles table (with foreign key references)
+CREATE TABLE IF NOT EXISTS public.articles (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  link TEXT NOT NULL UNIQUE,
+  summary TEXT,
+  publication_date TIMESTAMP WITH TIME ZONE,
+  journal_name TEXT,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  journal_id UUID REFERENCES public.journals(id),
+  primary_category_id TEXT REFERENCES public.categories(id),
+  content_summary TEXT,
+  keywords TEXT[],
+  confidence_score DECIMAL(3,2) DEFAULT 1.00
+);
+
+-- 5. User preferences table
+CREATE TABLE IF NOT EXISTS public.user_preferences (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  discovery_feed_settings JSONB,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+-- 6. Collections table
+CREATE TABLE IF NOT EXISTS public.collections (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  is_public BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+-- 7. Collection articles table
+CREATE TABLE IF NOT EXISTS public.collection_articles (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  collection_id UUID NOT NULL REFERENCES public.collections(id) ON DELETE CASCADE,
+  article_id UUID NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE,
+  added_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  UNIQUE(collection_id, article_id)
+);
+
+-- 8. User saved articles table
+CREATE TABLE IF NOT EXISTS public.user_saved_articles (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL,
+  article_id UUID NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  UNIQUE(user_id, article_id)
+);
+
+-- 9. Article-Category mapping
 CREATE TABLE IF NOT EXISTS public.article_categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   article_id UUID NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE,
   category_id TEXT NOT NULL REFERENCES public.categories(id),
-  assignment_type TEXT NOT NULL DEFAULT 'journal', -- 'journal' or 'content'
+  assignment_type TEXT NOT NULL DEFAULT 'journal',
   confidence_score DECIMAL(3,2) DEFAULT 1.00,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(article_id, category_id)
 );
 
--- 10. NEW: Article-Tag mapping (many-to-many, for later)
+-- 10. Article-Tag mapping
 CREATE TABLE IF NOT EXISTS public.article_tags (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   article_id UUID NOT NULL REFERENCES public.articles(id) ON DELETE CASCADE,
@@ -114,15 +111,6 @@ CREATE TABLE IF NOT EXISTS public.article_tags (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(article_id, tag_id)
 );
-
--- Add foreign key constraints for new columns
-ALTER TABLE public.articles 
-ADD CONSTRAINT fk_articles_journal 
-FOREIGN KEY (journal_id) REFERENCES public.journals(id);
-
-ALTER TABLE public.articles 
-ADD CONSTRAINT fk_articles_category 
-FOREIGN KEY (primary_category_id) REFERENCES public.categories(id);
 
 -- Enable Row Level Security
 ALTER TABLE public.articles ENABLE ROW LEVEL SECURITY;
@@ -136,7 +124,7 @@ ALTER TABLE public.tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.article_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.article_tags ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies - Public read for content
+-- RLS Policies
 CREATE POLICY "Anyone can view articles" ON public.articles FOR SELECT USING (true);
 CREATE POLICY "Anyone can view categories" ON public.categories FOR SELECT USING (true);
 CREATE POLICY "Anyone can view journals" ON public.journals FOR SELECT USING (true);
@@ -144,7 +132,6 @@ CREATE POLICY "Anyone can view tags" ON public.tags FOR SELECT USING (true);
 CREATE POLICY "Anyone can view article categories" ON public.article_categories FOR SELECT USING (true);
 CREATE POLICY "Anyone can view article tags" ON public.article_tags FOR SELECT USING (true);
 
--- RLS Policies - User-specific access
 CREATE POLICY "Users can view their own preferences" ON public.user_preferences FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can update their own preferences" ON public.user_preferences FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert their own preferences" ON public.user_preferences FOR INSERT WITH CHECK (auth.uid() = user_id);
@@ -184,7 +171,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
--- Triggers
 CREATE TRIGGER update_user_preferences_updated_at
   BEFORE UPDATE ON public.user_preferences
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
