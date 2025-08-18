@@ -2,24 +2,20 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   ExternalLink, 
   Calendar, 
   User, 
   BookOpen, 
   Bookmark,
-  Plus,
   Quote,
-  ChevronDown,
-  ChevronUp
+  Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useSavedArticles } from '@/hooks/useSavedArticles';
-import { useCollections } from '@/hooks/useCollections';
 import { useAuth } from '@/hooks/useAuth';
 import { SaveOptionsDialog } from '@/components/SaveOptionsDialog';
 import { CitationModal } from '@/components/CitationModal';
+import { ArticleExpandModal } from '@/components/ArticleExpandModal';
 import { useToast } from '@/hooks/use-toast';
 
 interface Article {
@@ -51,11 +47,7 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
   const { toast } = useToast();
   const [showSaveOptions, setShowSaveOptions] = useState(false);
   const [showCitation, setShowCitation] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const isArticleSaved = false; // We'll handle this in the save dialog
-  const publicCollections = [];
-  const userCollections = [];
+  const [showExpandModal, setShowExpandModal] = useState(false);
 
   const truncateText = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
@@ -136,52 +128,13 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
         <CardContent className="flex-grow flex flex-col">
           {/* Compact Summary */}
           {article.summary && (
-            <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-              <CardDescription className="mb-2">
-                {truncateText(article.summary, 100)}
-              </CardDescription>
-              
-              <CollapsibleTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="p-0 h-auto mb-3 text-primary hover:text-primary/80"
-                >
-                  {isExpanded ? (
-                    <span className="flex items-center gap-1">
-                      Show less <ChevronUp className="h-3 w-3" />
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      Show more <ChevronDown className="h-3 w-3" />
-                    </span>
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-              
-              <CollapsibleContent className="animate-accordion-down">
-                <div className="pt-2 border-t border-border/50 space-y-3">
-                  <CardDescription>
-                    {article.summary}
-                  </CardDescription>
-                  
-                  {/* Full tags shown when expanded */}
-                  {displayTags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {displayTags.map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+            <CardDescription className="mb-3">
+              {truncateText(article.summary, 120)}
+            </CardDescription>
           )}
 
-          {/* Compact Tags - only show when not expanded */}
-          {!isExpanded && displayTags.length > 0 && (
+          {/* Compact Tags */}
+          {displayTags.length > 0 && (
             <div className="mb-3">
               <div className="flex flex-wrap gap-1">
                 {displayTags.slice(0, 2).map((tag, index) => (
@@ -208,6 +161,15 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
               >
                 <Bookmark className="h-4 w-4 mr-1" />
                 Save
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowExpandModal(true)}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                View
               </Button>
             </div>
 
@@ -243,6 +205,12 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
           journal_name: article.journal_name,
           ticker_symbol: article.ticker_symbol
         }}
+      />
+
+      <ArticleExpandModal
+        article={article}
+        open={showExpandModal}
+        onOpenChange={setShowExpandModal}
       />
     </>
   );

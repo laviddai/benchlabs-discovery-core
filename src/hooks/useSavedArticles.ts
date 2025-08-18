@@ -102,7 +102,8 @@ export const useSavedArticles = () => {
         .from('user_saved_articles')
         .select(`
           created_at,
-          articles (
+          article_id,
+          articles_with_metadata!inner (
             id,
             title,
             link,
@@ -117,7 +118,7 @@ export const useSavedArticles = () => {
       if (error) throw error;
 
       return data?.map(item => ({
-        ...item.articles,
+        ...item.articles_with_metadata,
         saved_at: item.created_at,
       })) || [];
     } catch (error) {
