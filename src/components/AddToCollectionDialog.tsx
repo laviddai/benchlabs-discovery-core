@@ -8,13 +8,22 @@ import { useCollections } from '@/hooks/useCollections';
 import { CollectionDialog } from './CollectionDialog';
 
 interface AddToCollectionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   articleId: string;
+  collections: any[];
   children?: React.ReactNode;
 }
 
-export const AddToCollectionDialog = ({ articleId, children }: AddToCollectionDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const { collections, addArticleToCollection, removeArticleFromCollection } = useCollections();
+export const AddToCollectionDialog = ({ 
+  open, 
+  onOpenChange, 
+  articleId, 
+  collections, 
+  children 
+}: AddToCollectionDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const { addArticleToCollection, removeArticleFromCollection } = useCollections();
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +42,7 @@ export const AddToCollectionDialog = ({ articleId, children }: AddToCollectionDi
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         {children || (
           <Button variant="ghost" size="sm">

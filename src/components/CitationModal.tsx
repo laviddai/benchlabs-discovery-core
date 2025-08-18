@@ -9,18 +9,38 @@ import { useToast } from '@/hooks/use-toast';
 interface CitationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  citationData: CitationData;
+  article: {
+    id: string;
+    title: string;
+    link: string;
+    summary?: string;
+    publication_date?: string;
+    journal_name?: string;
+    ticker_symbol?: string;
+  };
   onCitationCopy?: (format: string) => void;
 }
 
 export const CitationModal = ({ 
   open, 
   onOpenChange, 
-  citationData, 
+  article, 
   onCitationCopy 
 }: CitationModalProps) => {
   const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const citationData: CitationData = {
+    title: article.title,
+    authors: [''], // We'll use empty author if not provided
+    journal: article.journal_name || '',
+    year: article.publication_date ? new Date(article.publication_date).getFullYear().toString() : '',
+    url: article.link,
+    doi: '',
+    volume: '',
+    issue: '',
+    pages: ''
+  };
 
   const handleCopy = async (format: 'bibtex' | 'apa' | 'mla') => {
     const citation = formatCitation(citationData, format);

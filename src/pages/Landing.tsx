@@ -33,10 +33,10 @@ const Landing = () => {
         .from('articles')
         .select(`
           *,
-          article_tag_maps(
+          article_tags(
             tags(name)
           ),
-          article_category_maps(
+          article_categories(
             categories(level_1_discipline, level_2_field)
           )
         `)
@@ -48,14 +48,14 @@ const Landing = () => {
         return;
       }
 
-      const transformedArticles = data?.map(article => ({
+      const transformedArticles = (data || []).map(article => ({
         ...article,
-        tags: article.article_tag_maps?.map((tagMap: any) => ({ name: tagMap.tags?.name })).filter(Boolean) || [],
-        categories: article.article_category_maps?.map((catMap: any) => ({
+        tags: article.article_tags?.map((tagMap: any) => ({ name: tagMap.tags?.name })).filter(Boolean) || [],
+        categories: article.article_categories?.map((catMap: any) => ({
           level_1_discipline: catMap.categories?.level_1_discipline,
           level_2_field: catMap.categories?.level_2_field
         })).filter(Boolean) || []
-      })) || [];
+      }));
 
       setRecentArticles(transformedArticles);
     } catch (error) {

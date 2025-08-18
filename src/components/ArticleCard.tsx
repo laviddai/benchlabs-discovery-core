@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ExternalLink, Clock, Bookmark, BookmarkCheck, FolderPlus, Quote } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
-import { AddToCollectionDialog } from './AddToCollectionDialog';
+import { useCollections } from '@/hooks/useCollections';
 import { CitationModal } from './CitationModal';
 import { useState } from 'react';
 
@@ -33,6 +33,7 @@ export const ArticleCard = ({
   categories 
 }: ArticleCardProps) => {
   const { toggleSaveArticle, isSaved, loading } = useSavedArticles();
+  const { collections, addArticleToCollection } = useCollections();
   const [citationModalOpen, setCitationModalOpen] = useState(false);
   
   // Normalize tags to consistent format
@@ -49,144 +50,169 @@ export const ArticleCard = ({
     toggleSaveArticle(id);
   };
 
+  const handleAddToCollection = async () => {
+    // Add to default collection or first available collection
+    if (collections.length > 0) {
+      await addArticleToCollection(collections[0].id, id);
+    }
+  };
+
   const handleCitationCopy = (format: string) => {
     // Track citation export for analytics
     console.log(`Citation exported: ${format} for article ${id}`);
   };
 
-  const citationData = {
+  const article = {
+    id,
     title,
-    journal: journal_name,
-    publicationDate: publication_date,
-    url: link,
+    link,
+    summary,
+    publication_date,
+    journal_name,
+    ticker_symbol
   };
 
   return (
     <TooltipProvider>
-      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg leading-tight line-clamp-2 flex-1">
-              {title}
-            </CardTitle>
-            <div className="flex items-center gap-2 shrink-0">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setCitationModalOpen(true)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Quote className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Cite article</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <AddToCollectionDialog articleId={id}>
+      <Card className="h-full flex flex-col transition-all duration-200 hover:shadow-lg">
+        <CardHeader className="flex-shrink-0">
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1">
+              <CardTitle className="text-lg leading-tight mb-2">
+                <a 
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  {title}
+                </a>
+              </CardTitle>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex space-x-1">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => setCitationModalOpen(true)}
+                      >
+                        <Quote className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Cite article</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={handleAddToCollection}
+                      >
+                        <FolderPlus className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add to collection</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0"
+                      onClick={handleSaveClick}
+                      disabled={loading}
                     >
-                      <FolderPlus className="h-4 w-4" />
+                      {isSaved(id) ? (
+                        <BookmarkCheck className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Bookmark className="h-4 w-4" />
+                      )}
                     </Button>
-                  </AddToCollectionDialog>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add to collection</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSaveClick}
-                    disabled={loading}
-                    className="h-8 w-8 p-0"
-                  >
-                    {isSaved(id) ? (
-                      <BookmarkCheck className="h-4 w-4 text-primary" />
-                    ) : (
-                      <Bookmark className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isSaved(id) ? 'Remove from saved' : 'Save article'}</p>
-                </TooltipContent>
-              </Tooltip>
-              {ticker_symbol && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Badge variant="outline" className="text-xs">
-                      {ticker_symbol}
-                    </Badge>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{journal_name}</p>
+                    <p>{isSaved(id) ? 'Remove from saved' : 'Save article'}</p>
                   </TooltipContent>
                 </Tooltip>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {journal_name && !ticker_symbol && (
-              <span className="font-medium">{journal_name}</span>
-            )}
-            {publication_date && (
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                <span>
-                  {formatDistanceToNow(new Date(publication_date), { addSuffix: true })}
-                </span>
               </div>
-            )}
+            </div>
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col">
+        <CardContent className="flex-grow flex flex-col">
+          {/* Journal and Date */}
+          <div className="flex items-center text-sm text-muted-foreground mb-3">
+            {journal_name && (
+              <span className="font-medium">{journal_name}</span>
+            )}
+            {publication_date && (
+              <>
+                {journal_name && <span className="mx-2">•</span>}
+                <div className="flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {formatDistanceToNow(new Date(publication_date), { addSuffix: true })}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Summary */}
           {summary && (
-            <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-grow">
               {summary}
             </p>
           )}
-          
-          <div className="space-y-3">
-            {normalizedTags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {normalizedTags.slice(0, 3).map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-                {normalizedTags.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{normalizedTags.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            )}
+
+          {/* Tags */}
+          {normalizedTags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-4">
+              {normalizedTags.slice(0, 3).map((tag, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+              {normalizedTags.length > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{normalizedTags.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* Categories */}
+          {normalizedCategories.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-4">
+              {normalizedCategories.slice(0, 2).map((category, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {category}
+                </Badge>
+              ))}
+            </div>
+          )}
             
-            <Button asChild size="sm" className="w-full">
-              <a href={link} target="_blank" rel="noopener noreferrer">
-                Read Paper
-                <ExternalLink className="ml-2 h-3 w-3" />
-              </a>
-            </Button>
-          </div>
+          <Button asChild size="sm" className="w-full mt-auto">
+            <a href={link} target="_blank" rel="noopener noreferrer">
+              Read Paper
+              <ExternalLink className="ml-2 h-3 w-3" />
+            </a>
+          </Button>
         </CardContent>
       </Card>
       
       <CitationModal
         open={citationModalOpen}
         onOpenChange={setCitationModalOpen}
-        citationData={citationData}
+        article={article}
         onCitationCopy={handleCitationCopy}
       />
     </TooltipProvider>

@@ -58,37 +58,79 @@ const DiscoveryArticles = () => {
     setLoading(true);
     
     try {
-      let query = supabase
-        .from('articles_with_metadata')
-        .select('*')
-        .order('publication_date', { ascending: false });
+      // Use a raw query since articles_with_metadata is a view
+      let query = `
+        SELECT * FROM articles_with_metadata 
+        ORDER BY publication_date DESC
+      `;
+      
+      const conditions: string[] = [];
+      const params: any[] = [];
 
       // Apply discipline filter
       if (filters.selectedDiscipline) {
-        query = query.eq('level_1_discipline', filters.selectedDiscipline);
+        conditions.push(`level_1_discipline = $${params.length + 1}`);
+        params.push(filters.selectedDiscipline);
       }
 
       // Apply field filter
       if (filters.selectedField) {
-        query = query.eq('level_2_field', filters.selectedField);
+        conditions.push(`level_2_field = $${params.length + 1}`);
+        params.push(filters.selectedField);
       }
 
       // Apply date range filter
       if (filters.dateFrom) {
-        query = query.gte('publication_date', filters.dateFrom.toISOString());
+        conditions.push(`publication_date >= $${params.length + 1}`);
+        params.push(filters.dateFrom.toISOString());
       }
       if (filters.dateTo) {
-        query = query.lte('publication_date', filters.dateTo.toISOString());
+        conditions.push(`publication_date <= $${params.length + 1}`);
+        params.push(filters.dateTo.toISOString());
       }
 
-      const { data, error } = await query;
+      if (conditions.length > 0) {
+        query += ` WHERE ${conditions.join(' AND ')}`;
+      }
+
+      // Since we can't use rpc, let's use the regular articles table and join manually
+      const { data, error } = await supabase
+        .from('articles')
+        .select(`
+          *,
+          article_categories!inner(
+            categories(*)
+          )
+        `)
+        .order('publication_date', { ascending: false });
 
       if (error) {
         console.error('Error fetching articles:', error);
         return;
       }
 
-      setArticles(data || []);
+      // Transform the data to match our Article interface
+      const transformedArticles = data?.map((article: any) => ({
+        id: article.id,
+        title: article.title,
+        link: article.link,
+        summary: article.summary,
+        publication_date: article.publication_date,
+        author: article.author,
+        journal_name: article.journal_name,
+        ticker_symbol: article.ticker_symbol,
+        category_id: article.article_categories?.[0]?.categories?.id,
+        level_1_discipline: article.article_categories?.[0]?.categories?.level_1_discipline,
+        level_2_field: article.article_categories?.[0]?.categories?.level_2_field,
+        category_name: article.article_categories?.[0]?.categories?.name,
+        category_color: article.article_categories?.[0]?.categories?.color_hex,
+        category_description: article.article_categories?.[0]?.categories?.description,
+        combined_tags: article.all_tags,
+        all_tags: article.all_tags,
+        created_at: article.created_at
+      })) || [];
+
+      setArticles(transformedArticles);
     } catch (error) {
       console.error('Error fetching articles:', error);
     } finally {

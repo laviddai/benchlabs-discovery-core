@@ -7,66 +7,108 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
-      article_category_maps: {
+      article_categories: {
         Row: {
           article_id: string
+          assignment_type: string | null
           category_id: string
+          confidence_score: number | null
+          created_at: string | null
+          id: string
         }
         Insert: {
           article_id: string
+          assignment_type?: string | null
           category_id: string
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
         }
         Update: {
           article_id?: string
+          assignment_type?: string | null
           category_id?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "article_category_maps_article_id_fkey"
+            foreignKeyName: "article_categories_article_id_fkey"
             columns: ["article_id"]
             isOneToOne: false
             referencedRelation: "articles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "article_category_maps_category_id_fkey"
+            foreignKeyName: "article_categories_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles_with_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_categories_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "article_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "category_stats"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      article_tag_maps: {
+      article_tags: {
         Row: {
           article_id: string
-          tag_id: number
+          created_at: string | null
+          id: string
+          relevance_score: number | null
+          tag_id: string
         }
         Insert: {
           article_id: string
-          tag_id: number
+          created_at?: string | null
+          id?: string
+          relevance_score?: number | null
+          tag_id: string
         }
         Update: {
           article_id?: string
-          tag_id?: number
+          created_at?: string | null
+          id?: string
+          relevance_score?: number | null
+          tag_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "article_tag_maps_article_id_fkey"
+            foreignKeyName: "article_tags_article_id_fkey"
             columns: ["article_id"]
             isOneToOne: false
             referencedRelation: "articles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "article_tag_maps_tag_id_fkey"
+            foreignKeyName: "article_tags_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles_with_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_tags_tag_id_fkey"
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "tags"
@@ -76,58 +118,103 @@ export type Database = {
       }
       articles: {
         Row: {
+          all_tags: string[] | null
+          author: string | null
+          category_id: string | null
+          confidence_score: number | null
+          content_analysis: Json | null
           created_at: string
           id: string
           journal_name: string | null
+          level_1_discipline: string | null
+          level_2_field: string | null
           link: string
           publication_date: string | null
           summary: string | null
+          ticker_symbol: string | null
           title: string
         }
         Insert: {
+          all_tags?: string[] | null
+          author?: string | null
+          category_id?: string | null
+          confidence_score?: number | null
+          content_analysis?: Json | null
           created_at?: string
           id?: string
           journal_name?: string | null
+          level_1_discipline?: string | null
+          level_2_field?: string | null
           link: string
           publication_date?: string | null
           summary?: string | null
+          ticker_symbol?: string | null
           title: string
         }
         Update: {
+          all_tags?: string[] | null
+          author?: string | null
+          category_id?: string | null
+          confidence_score?: number | null
+          content_analysis?: Json | null
           created_at?: string
           id?: string
           journal_name?: string | null
+          level_1_discipline?: string | null
+          level_2_field?: string | null
           link?: string
           publication_date?: string | null
           summary?: string | null
+          ticker_symbol?: string | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "category_stats"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categories: {
         Row: {
-          description: string | null
+          color_hex: string | null
+          created_at: string | null
+          description: string
           id: string
+          is_active: boolean | null
           level_1_discipline: string
           level_2_field: string
-          level_3_specialization: string | null
-          level_4_subspecialization: string | null
+          name: string
         }
         Insert: {
-          description?: string | null
+          color_hex?: string | null
+          created_at?: string | null
+          description: string
           id: string
+          is_active?: boolean | null
           level_1_discipline: string
           level_2_field: string
-          level_3_specialization?: string | null
-          level_4_subspecialization?: string | null
+          name: string
         }
         Update: {
-          description?: string | null
+          color_hex?: string | null
+          created_at?: string | null
+          description?: string
           id?: string
+          is_active?: boolean | null
           level_1_discipline?: string
           level_2_field?: string
-          level_3_specialization?: string | null
-          level_4_subspecialization?: string | null
+          name?: string
         }
         Relationships: []
       }
@@ -190,105 +277,30 @@ export type Database = {
         }
         Relationships: []
       }
-      ingestion_logs: {
-        Row: {
-          created_at: string
-          error_message: string | null
-          id: string | null
-          log_id: number
-          source_url: string | null
-        }
-        Insert: {
-          created_at?: string
-          error_message?: string | null
-          id?: string | null
-          log_id?: number
-          source_url?: string | null
-        }
-        Update: {
-          created_at?: string
-          error_message?: string | null
-          id?: string | null
-          log_id?: number
-          source_url?: string | null
-        }
-        Relationships: []
-      }
-      ingestion_sources: {
-        Row: {
-          id: string
-          source_name: string | null
-          source_url: string
-          tags: string | null
-          ticker_symbol: string | null
-        }
-        Insert: {
-          id: string
-          source_name?: string | null
-          source_url: string
-          tags?: string | null
-          ticker_symbol?: string | null
-        }
-        Update: {
-          id?: string
-          source_name?: string | null
-          source_url?: string
-          tags?: string | null
-          ticker_symbol?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ingestion_sources_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ingestion_sources_ticker_symbol_fkey"
-            columns: ["ticker_symbol"]
-            isOneToOne: false
-            referencedRelation: "journal_metadata"
-            referencedColumns: ["ticker_symbol"]
-          },
-        ]
-      }
-      journal_metadata: {
-        Row: {
-          access_url: string | null
-          id: number
-          source_name: string
-          source_url: string | null
-          ticker_symbol: string | null
-        }
-        Insert: {
-          access_url?: string | null
-          id?: number
-          source_name: string
-          source_url?: string | null
-          ticker_symbol?: string | null
-        }
-        Update: {
-          access_url?: string | null
-          id?: number
-          source_name?: string
-          source_url?: string | null
-          ticker_symbol?: string | null
-        }
-        Relationships: []
-      }
       tags: {
         Row: {
-          id: number
-          tags: string
+          category_hint: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          usage_count: number | null
         }
         Insert: {
-          id?: number
-          tags: string
+          category_hint?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          usage_count?: number | null
         }
         Update: {
-          id?: number
-          tags?: string
+          category_hint?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          usage_count?: number | null
         }
         Relationships: []
       }
@@ -296,6 +308,7 @@ export type Database = {
         Row: {
           created_at: string
           discovery_feed_settings: Json | null
+          display_name: string | null
           id: number
           updated_at: string
           user_id: string
@@ -303,6 +316,7 @@ export type Database = {
         Insert: {
           created_at?: string
           discovery_feed_settings?: Json | null
+          display_name?: string | null
           id?: number
           updated_at?: string
           user_id: string
@@ -310,6 +324,7 @@ export type Database = {
         Update: {
           created_at?: string
           discovery_feed_settings?: Json | null
+          display_name?: string | null
           id?: number
           updated_at?: string
           user_id?: string
@@ -343,11 +358,71 @@ export type Database = {
             referencedRelation: "articles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_saved_articles_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles_with_metadata"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      articles_with_metadata: {
+        Row: {
+          all_tags: string[] | null
+          author: string | null
+          category_color: string | null
+          category_description: string | null
+          category_id: string | null
+          category_name: string | null
+          combined_tags: string[] | null
+          confidence_score: number | null
+          content_analysis: Json | null
+          created_at: string | null
+          id: string | null
+          journal_name: string | null
+          level_1_discipline: string | null
+          level_2_field: string | null
+          link: string | null
+          publication_date: string | null
+          summary: string | null
+          ticker_symbol: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "category_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      category_stats: {
+        Row: {
+          article_count: number | null
+          color_hex: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          is_active: boolean | null
+          level_1_discipline: string | null
+          level_2_field: string | null
+          name: string | null
+          recent_articles: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
