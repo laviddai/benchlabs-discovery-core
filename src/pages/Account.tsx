@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
-import { User, Lock, Settings, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, Lock, Settings, AlertCircle, CheckCircle, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Account = () => {
   const { user, updatePassword } = useAuth();
@@ -17,8 +18,85 @@ const Account = () => {
     newPassword: '',
     confirmPassword: ''
   });
+  const [displayName, setDisplayName] = useState('');
+  const [editingDisplayName, setEditingDisplayName] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [displayNameLoading, setDisplayNameLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      // Get display name from user metadata or preferences
+      const userDisplayName = user.user_metadata?.display_name || data?.display_name || '';
+      setDisplayName(userDisplayName);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  const handleDisplayNameUpdate = async () => {
+    if (!user || !displayName.trim()) return;
+
+    setDisplayNameLoading(true);
+    try {
+      // Update user metadata
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { display_name: displayName.trim() }
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Also store in user_preferences for backup
+      const { error: upsertError } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: user.id,
+          display_name: displayName.trim()
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (upsertError) {
+        console.error('Error updating preferences:', upsertError);
+      }
+
+      toast({
+        title: "Display name updated",
+        description: "Your display name has been successfully updated.",
+      });
+      
+      setEditingDisplayName(false);
+    } catch (error: any) {
+      toast({
+        title: "Error updating display name",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setDisplayNameLoading(false);
+    }
+  };
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +166,51 @@ const Account = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Display Name</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        disabled={!editingDisplayName}
+                        placeholder="Enter your display name"
+                        className={!editingDisplayName ? "bg-muted" : ""}
+                      />
+                      {editingDisplayName ? (
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            onClick={handleDisplayNameUpdate}
+                            disabled={displayNameLoading || !displayName.trim()}
+                          >
+                            {displayNameLoading ? 'Saving...' : 'Save'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingDisplayName(false);
+                              fetchUserProfile(); // Reset to original value
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingDisplayName(true)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This name will be displayed publicly on your profile and contributions.
+                    </p>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>Email Address</Label>
                     <Input

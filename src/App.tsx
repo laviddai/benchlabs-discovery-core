@@ -11,6 +11,7 @@ import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
 import Discovery from "./pages/Discovery";
+import DiscoveryArticles from "./pages/DiscoveryArticles";
 import Account from "./pages/Account";
 import BenchTop from "./pages/Benchtop";
 import BenchMate from "./pages/BenchMate";
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/sign-in" element={<SignIn />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/discovery" element={<Discovery />} />
+              <Route path="/discovery/articles" element={<DiscoveryArticles />} />
               <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
               <Route path="/benchtop" element={<ProtectedRoute><BenchTop /></ProtectedRoute>} />
               <Route path="/benchmate" element={<ProtectedRoute><BenchMate /></ProtectedRoute>} />

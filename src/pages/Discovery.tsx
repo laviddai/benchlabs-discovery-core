@@ -1,105 +1,69 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
-import { CategoryFilter } from '@/components/CategoryFilter';
-import { ArticleCard } from '@/components/ArticleCard';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface Article {
-  id: string;
-  title: string;
-  link: string;
-  summary?: string;
-  publication_date?: string;
-  journal_name?: string;
-  ticker_symbol?: string;
-  tags?: { name: string }[];
-  categories?: { level_1_discipline: string, level_2_field: string }[];
-}
+import { 
+  FlaskConical, 
+  Calendar, 
+  Users, 
+  Building2, 
+  ArrowRight,
+  BookOpen
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Discovery = () => {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const articlesPerPage = 24;
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchArticles();
-  }, [selectedCategories]);
-
-  const fetchArticles = async () => {
-    setLoading(true);
-    
-    try {
-      let query = supabase
-        .from('articles')
-        .select(`
-          *,
-          article_tag_maps(
-            tags(name)
-          ),
-          article_category_maps(
-            categories(id, level_1_discipline, level_2_field, level_3_specialization, level_4_subspecialization)
-          )
-        `)
-        .order('publication_date', { ascending: false });
-
-      // Filter by categories if selected
-      if (selectedCategories.length > 0) {
-        const { data: categoryMaps } = await supabase
-          .from('article_category_maps')
-          .select('article_id')
-          .in('category_id', selectedCategories);
-        
-        const articleIds = categoryMaps?.map(m => m.article_id) || [];
-        if (articleIds.length > 0) {
-          query = query.in('id', articleIds);
-        }
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching articles:', error);
-        return;
-      }
-
-      // Transform the data to include tags and categories
-      const transformedArticles = data?.map(article => ({
-        ...article,
-        tags: article.article_tag_maps?.map((tagMap: any) => ({ name: tagMap.tags?.name })).filter(Boolean) || [],
-        categories: article.article_category_maps?.map((catMap: any) => ({
-          level_1_discipline: catMap.categories?.level_1_discipline,
-          level_2_field: catMap.categories?.level_2_field
-        })).filter(Boolean) || []
-      })) || [];
-
-      setArticles(transformedArticles);
-    } catch (error) {
-      console.error('Error fetching articles:', error);
-    } finally {
-      setLoading(false);
+  const sections = [
+    {
+      id: 'recent-articles',
+      title: 'Recent Articles',
+      description: 'Latest research publications and papers from leading journals',
+      icon: BookOpen,
+      color: 'from-blue-500 to-blue-600',
+      available: true,
+      path: '/discovery/articles'
+    },
+    {
+      id: 'tools-resources',
+      title: 'Tools & Resources',
+      description: 'Laboratory equipment, software, and research tools',
+      icon: FlaskConical,
+      color: 'from-green-500 to-green-600',
+      available: false
+    },
+    {
+      id: 'events-conferences',
+      title: 'Events & Conferences',
+      description: 'Upcoming conferences, seminars, and scientific meetings',
+      icon: Calendar,
+      color: 'from-purple-500 to-purple-600',
+      available: false
+    },
+    {
+      id: 'societies-associations',
+      title: 'Societies & Associations',
+      description: 'Professional organizations and scientific societies',
+      icon: Users,
+      color: 'from-orange-500 to-orange-600',
+      available: false
+    },
+    {
+      id: 'companies-industry',
+      title: 'Companies & Industry',
+      description: 'Biotechnology companies and industry partnerships',
+      icon: Building2,
+      color: 'from-indigo-500 to-indigo-600',
+      available: false
     }
-  };
+  ];
 
-  const filteredArticles = articles.filter(article =>
-    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    article.summary?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    article.journal_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
-  const startIndex = (currentPage - 1) * articlesPerPage;
-  const paginatedArticles = filteredArticles.slice(startIndex, startIndex + articlesPerPage);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleSectionClick = (section: typeof sections[0]) => {
+    if (section.available) {
+      navigate(section.path);
+    }
   };
 
   return (
@@ -110,107 +74,90 @@ const Discovery = () => {
           <header className="h-14 border-b bg-background flex items-center px-4">
             <SidebarTrigger />
             <div className="ml-4">
-              <h1 className="text-lg font-semibold">Discovery Feed</h1>
+              <h1 className="text-lg font-semibold">Discovery</h1>
             </div>
           </header>
 
-
-          <div className="flex">
-            {/* Left Sidebar - Filters */}
-            <div className="w-80 border-r bg-muted/30 p-4">
-              <CategoryFilter
-                selectedCategories={selectedCategories}
-                onCategoryChange={setSelectedCategories}
-              />
+          <div className="p-6 max-w-7xl mx-auto">
+            {/* Hero Section */}
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold mb-2">Discover Scientific Resources</h2>
+              <p className="text-muted-foreground text-lg">
+                Explore the latest research, tools, events, and industry connections in life sciences
+              </p>
             </div>
 
-            {/* Main Content */}
-            <div className="flex-1 p-6 max-w-7xl">
-              {/* Search Bar */}
-              <div className="mb-6">
-                <div className="relative max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search articles, authors, or journals..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              {/* Results Summary */}
-              <div className="mb-6">
-                <p className="text-sm text-muted-foreground">
-                  {loading ? 'Loading...' : `${filteredArticles.length} articles found`}
-                  {selectedCategories.length > 0 && ` (filtered by ${selectedCategories.length} categories)`}
-                </p>
-              </div>
-
-              {/* Articles Grid */}
-              {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {Array.from({ length: 24 }).map((_, index) => (
-                    <div key={index} className="h-64 bg-muted animate-pulse rounded-lg"></div>
-                  ))}
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {paginatedArticles.map((article) => (
-                      <ArticleCard key={article.id} {...article} />
-                    ))}
-                  </div>
-
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        Previous
-                      </Button>
-                      
-                      <div className="flex space-x-1">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                          <Button
-                            key={page}
-                            variant={page === currentPage ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handlePageChange(page)}
-                            className="w-10"
-                          >
-                            {page}
-                          </Button>
-                        ))}
+            {/* Discovery Sections Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sections.map((section) => (
+                <Card 
+                  key={section.id} 
+                  className={`relative overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                    section.available ? 'hover:scale-105' : 'opacity-70'
+                  }`}
+                  onClick={() => handleSectionClick(section)}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${section.color} opacity-5`} />
+                  
+                  <CardHeader className="relative">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg bg-gradient-to-br ${section.color} text-white`}>
+                        <section.icon className="h-6 w-6" />
                       </div>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{section.title}</CardTitle>
+                        {!section.available && (
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                            Coming Soon
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </>
-              )}
+                  </CardHeader>
+                  
+                  <CardContent className="relative">
+                    <CardDescription className="mb-4">
+                      {section.description}
+                    </CardDescription>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        {section.available ? 'Available now' : 'Coming soon'}
+                      </div>
+                      {section.available && (
+                        <Button variant="ghost" size="sm" className="p-0">
+                          <span className="mr-2">Explore</span>
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-              {!loading && filteredArticles.length === 0 && (
-                <div className="text-center py-12">
-                  <h3 className="text-lg font-medium mb-2">No articles found</h3>
-                  <p className="text-muted-foreground">
-                    Try adjusting your search criteria or removing some filters.
-                  </p>
-                </div>
-              )}
+            {/* Stats Section */}
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="text-center">
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold text-primary mb-2">10,000+</div>
+                  <div className="text-sm text-muted-foreground">Research Articles</div>
+                </CardContent>
+              </Card>
+              
+              <Card className="text-center">
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold text-primary mb-2">500+</div>
+                  <div className="text-sm text-muted-foreground">Scientific Journals</div>
+                </CardContent>
+              </Card>
+              
+              <Card className="text-center">
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold text-primary mb-2">50+</div>
+                  <div className="text-sm text-muted-foreground">Research Categories</div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </main>
