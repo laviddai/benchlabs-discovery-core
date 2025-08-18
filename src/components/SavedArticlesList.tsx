@@ -26,6 +26,7 @@ export const SavedArticlesList = () => {
       setSavedArticles(articles);
     } catch (error) {
       console.error('Error fetching saved articles:', error);
+      setSavedArticles([]);
     } finally {
       setLoading(false);
     }

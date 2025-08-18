@@ -18,7 +18,7 @@ import { format } from 'date-fns';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
 import { useCollections } from '@/hooks/useCollections';
 import { useAuth } from '@/hooks/useAuth';
-import { AddToCollectionDialog } from '@/components/AddToCollectionDialog';
+import { SaveOptionsDialog } from '@/components/SaveOptionsDialog';
 import { CitationModal } from '@/components/CitationModal';
 import { useToast } from '@/hooks/use-toast';
 
@@ -49,22 +49,20 @@ interface DiscoveryArticleCardProps {
 export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { isSaved, toggleSaveArticle } = useSavedArticles();
-  const { collections } = useCollections();
-  const [showAddToCollection, setShowAddToCollection] = useState(false);
+  const [showSaveOptions, setShowSaveOptions] = useState(false);
   const [showCitation, setShowCitation] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const isArticleSaved = isSaved(article.id);
-  const publicCollections = collections.filter(c => c.is_public);
-  const userCollections = collections.filter(c => !c.is_public);
+  const isArticleSaved = false; // We'll handle this in the save dialog
+  const publicCollections = [];
+  const userCollections = [];
 
   const truncateText = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
     return text.substr(0, maxLength) + '...';
   };
 
-  const handleSaveToggle = async () => {
+  const handleSaveClick = () => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -73,20 +71,7 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
       });
       return;
     }
-    
-    await toggleSaveArticle(article.id);
-  };
-
-  const handleAddToCollection = () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to add articles to collections.",
-        variant: "destructive"
-      });
-      return;
-    }
-    setShowAddToCollection(true);
+    setShowSaveOptions(true);
   };
 
   const displayTags = article.combined_tags || article.all_tags || [];
@@ -219,20 +204,10 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleSaveToggle}
-                className={isArticleSaved ? 'bg-primary text-primary-foreground' : ''}
+                onClick={handleSaveClick}
               >
-                <Bookmark className={`h-4 w-4 mr-1 ${isArticleSaved ? 'fill-current' : ''}`} />
-                {isArticleSaved ? 'Saved' : 'Save'}
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddToCollection}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Add
+                <Bookmark className="h-4 w-4 mr-1" />
+                Save
               </Button>
             </div>
 
@@ -249,11 +224,11 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
       </Card>
 
       {/* Dialogs */}
-      <AddToCollectionDialog
-        open={showAddToCollection}
-        onOpenChange={setShowAddToCollection}
+      <SaveOptionsDialog
+        open={showSaveOptions}
+        onOpenChange={setShowSaveOptions}
         articleId={article.id}
-        collections={userCollections}
+        articleTitle={article.title}
       />
 
       <CitationModal
