@@ -172,15 +172,6 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
                 View
               </Button>
             </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowCitation(true)}
-            >
-              <Quote className="h-4 w-4 mr-1" />
-              Cite
-            </Button>
           </div>
         </CardContent>
       </Card>
