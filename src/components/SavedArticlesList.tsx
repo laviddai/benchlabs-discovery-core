@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArticleCard } from '@/components/ArticleCard';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
@@ -19,16 +19,21 @@ export const SavedArticlesList = () => {
   const [savedArticles, setSavedArticles] = useState<SavedArticle[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSavedArticles = async () => {
-      setLoading(true);
+  const fetchSavedArticles = useCallback(async () => {
+    setLoading(true);
+    try {
       const articles = await getSavedArticles();
       setSavedArticles(articles);
+    } catch (error) {
+      console.error('Error fetching saved articles:', error);
+    } finally {
       setLoading(false);
-    };
-
-    fetchSavedArticles();
+    }
   }, [getSavedArticles]);
+
+  useEffect(() => {
+    fetchSavedArticles();
+  }, [fetchSavedArticles]);
 
   if (loading) {
     return (

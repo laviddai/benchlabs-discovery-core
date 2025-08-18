@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   ExternalLink, 
   Calendar, 
@@ -9,7 +10,9 @@ import {
   BookOpen, 
   Bookmark,
   Plus,
-  Quote
+  Quote,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
@@ -50,7 +53,7 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
   const { collections } = useCollections();
   const [showAddToCollection, setShowAddToCollection] = useState(false);
   const [showCitation, setShowCitation] = useState(false);
-  const [showFullSummary, setShowFullSummary] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const isArticleSaved = isSaved(article.id);
   const publicCollections = collections.filter(c => c.is_public);
@@ -115,7 +118,7 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors flex items-start group"
                 >
-                  {article.title}
+                  {truncateText(article.title, 80)}
                   <ExternalLink className="h-4 w-4 ml-1 mt-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </a>
               </CardTitle>
@@ -127,13 +130,13 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
             {article.journal_name && (
               <div className="flex items-center">
                 <BookOpen className="h-4 w-4 mr-1" />
-                {article.journal_name}
+                {truncateText(article.journal_name, 30)}
               </div>
             )}
             {article.author && (
               <div className="flex items-center">
                 <User className="h-4 w-4 mr-1" />
-                {article.author}
+                {truncateText(article.author, 25)}
               </div>
             )}
             {article.publication_date && (
@@ -146,36 +149,64 @@ export const DiscoveryArticleCard = ({ article }: DiscoveryArticleCardProps) => 
         </CardHeader>
 
         <CardContent className="flex-grow flex flex-col">
-          {/* Summary */}
+          {/* Compact Summary */}
           {article.summary && (
-            <CardDescription className="mb-4 flex-grow">
-              {showFullSummary || article.summary.length <= 200 
-                ? article.summary 
-                : truncateText(article.summary, 200)
-              }
-              {article.summary.length > 200 && (
-                <button
-                  onClick={() => setShowFullSummary(!showFullSummary)}
-                  className="text-primary hover:underline ml-1"
+            <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+              <CardDescription className="mb-2">
+                {truncateText(article.summary, 100)}
+              </CardDescription>
+              
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="p-0 h-auto mb-3 text-primary hover:text-primary/80"
                 >
-                  {showFullSummary ? 'Show less' : 'Read more'}
-                </button>
-              )}
-            </CardDescription>
+                  {isExpanded ? (
+                    <span className="flex items-center gap-1">
+                      Show less <ChevronUp className="h-3 w-3" />
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      Show more <ChevronDown className="h-3 w-3" />
+                    </span>
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="animate-accordion-down">
+                <div className="pt-2 border-t border-border/50 space-y-3">
+                  <CardDescription>
+                    {article.summary}
+                  </CardDescription>
+                  
+                  {/* Full tags shown when expanded */}
+                  {displayTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {displayTags.map((tag, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           )}
 
-          {/* Tags */}
-          {displayTags.length > 0 && (
-            <div className="mb-4">
+          {/* Compact Tags - only show when not expanded */}
+          {!isExpanded && displayTags.length > 0 && (
+            <div className="mb-3">
               <div className="flex flex-wrap gap-1">
-                {displayTags.slice(0, 3).map((tag, index) => (
+                {displayTags.slice(0, 2).map((tag, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {tag}
                   </Badge>
                 ))}
-                {displayTags.length > 3 && (
+                {displayTags.length > 2 && (
                   <Badge variant="outline" className="text-xs text-muted-foreground">
-                    +{displayTags.length - 3} more
+                    +{displayTags.length - 2} more
                   </Badge>
                 )}
               </div>
