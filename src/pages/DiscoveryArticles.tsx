@@ -58,79 +58,39 @@ const DiscoveryArticles = () => {
     setLoading(true);
     
     try {
-      // Use a raw query since articles_with_metadata is a view
-      let query = `
-        SELECT * FROM articles_with_metadata 
-        ORDER BY publication_date DESC
-      `;
-      
-      const conditions: string[] = [];
-      const params: any[] = [];
+      // Query the articles_with_metadata view directly
+      let query = supabase
+        .from('articles_with_metadata')
+        .select('*')
+        .order('publication_date', { ascending: false });
 
       // Apply discipline filter
       if (filters.selectedDiscipline) {
-        conditions.push(`level_1_discipline = $${params.length + 1}`);
-        params.push(filters.selectedDiscipline);
+        query = query.eq('level_1_discipline', filters.selectedDiscipline);
       }
 
       // Apply field filter
       if (filters.selectedField) {
-        conditions.push(`level_2_field = $${params.length + 1}`);
-        params.push(filters.selectedField);
+        query = query.eq('level_2_field', filters.selectedField);
       }
 
       // Apply date range filter
       if (filters.dateFrom) {
-        conditions.push(`publication_date >= $${params.length + 1}`);
-        params.push(filters.dateFrom.toISOString());
+        query = query.gte('publication_date', filters.dateFrom.toISOString());
       }
       if (filters.dateTo) {
-        conditions.push(`publication_date <= $${params.length + 1}`);
-        params.push(filters.dateTo.toISOString());
+        query = query.lte('publication_date', filters.dateTo.toISOString());
       }
 
-      if (conditions.length > 0) {
-        query += ` WHERE ${conditions.join(' AND ')}`;
-      }
-
-      // Since we can't use rpc, let's use the regular articles table and join manually
-      const { data, error } = await supabase
-        .from('articles')
-        .select(`
-          *,
-          article_categories!inner(
-            categories(*)
-          )
-        `)
-        .order('publication_date', { ascending: false });
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching articles:', error);
         return;
       }
 
-      // Transform the data to match our Article interface
-      const transformedArticles = data?.map((article: any) => ({
-        id: article.id,
-        title: article.title,
-        link: article.link,
-        summary: article.summary,
-        publication_date: article.publication_date,
-        author: article.author,
-        journal_name: article.journal_name,
-        ticker_symbol: article.ticker_symbol,
-        category_id: article.article_categories?.[0]?.categories?.id,
-        level_1_discipline: article.article_categories?.[0]?.categories?.level_1_discipline,
-        level_2_field: article.article_categories?.[0]?.categories?.level_2_field,
-        category_name: article.article_categories?.[0]?.categories?.name,
-        category_color: article.article_categories?.[0]?.categories?.color_hex,
-        category_description: article.article_categories?.[0]?.categories?.description,
-        combined_tags: article.all_tags,
-        all_tags: article.all_tags,
-        created_at: article.created_at
-      })) || [];
-
-      setArticles(transformedArticles);
+      // The data is already in the correct format from the view
+      setArticles(data || []);
     } catch (error) {
       console.error('Error fetching articles:', error);
     } finally {
