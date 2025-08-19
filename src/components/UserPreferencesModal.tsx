@@ -96,10 +96,9 @@ export const UserPreferencesModal = ({
       const uniqueFields = [...new Set(fields?.map(f => f.level_2_field).filter(Boolean))] as string[];
       const uniqueTickerSymbols = [...new Set(tickers?.map(t => t.ticker_symbol).filter(Boolean))] as string[];
 
-      console.log('Found ticker symbols for preferences:', uniqueTickerSymbols.length, uniqueTickerSymbols);
       setAvailableDisciplines(uniqueDisciplines.sort());
       setAvailableFields(uniqueFields.sort());
-      setAvailableTickerSymbols(uniqueTickerSymbols.sort());
+      setAvailableTickerSymbols(uniqueTickerSymbols.sort().slice(0, 15));
     } catch (error) {
       console.error('Error fetching options:', error);
     }
