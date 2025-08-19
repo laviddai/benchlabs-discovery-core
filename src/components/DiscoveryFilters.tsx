@@ -105,7 +105,13 @@ export const DiscoveryFilters = ({
         return;
       }
 
+      console.log('Raw ticker symbol data:', data);
+      console.log('Total records with ticker symbols:', data?.length);
+
       const uniqueSymbols = [...new Set(data?.map(d => d.ticker_symbol).filter(Boolean))] as string[];
+      console.log('Unique ticker symbols found:', uniqueSymbols);
+      console.log('Total unique ticker symbols:', uniqueSymbols.length);
+      
       // Get all unique ticker symbols without artificial limitation
       setTickerSymbols(uniqueSymbols.sort());
     } catch (error) {
