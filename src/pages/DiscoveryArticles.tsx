@@ -48,6 +48,7 @@ interface UserPreferences {
   exclude_keywords: string[];
   preferred_disciplines: string[];
   preferred_fields: string[];
+  followed_ticker_symbols: string[];
   followed_journals: string[];
   excluded_journals: string[];
   keyword_logic: 'OR' | 'AND';

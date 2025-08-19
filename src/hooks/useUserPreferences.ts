@@ -7,6 +7,7 @@ interface UserPreferences {
   exclude_keywords: string[];
   preferred_disciplines: string[];
   preferred_fields: string[];
+  followed_ticker_symbols: string[];
   followed_journals: string[];
   excluded_journals: string[];
   keyword_logic: 'OR' | 'AND';
@@ -49,6 +50,7 @@ export const useUserPreferences = () => {
           exclude_keywords: Array.isArray(feedSettings.exclude_keywords) ? feedSettings.exclude_keywords : [],
           preferred_disciplines: Array.isArray(feedSettings.preferred_disciplines) ? feedSettings.preferred_disciplines : [],
           preferred_fields: Array.isArray(feedSettings.preferred_fields) ? feedSettings.preferred_fields : [],
+          followed_ticker_symbols: Array.isArray(feedSettings.followed_ticker_symbols) ? feedSettings.followed_ticker_symbols : [],
           followed_journals: Array.isArray(feedSettings.followed_journals) ? feedSettings.followed_journals : [],
           excluded_journals: Array.isArray(feedSettings.excluded_journals) ? feedSettings.excluded_journals : [],
           keyword_logic: (feedSettings.keyword_logic === 'AND' || feedSettings.keyword_logic === 'OR') ? feedSettings.keyword_logic : 'OR'

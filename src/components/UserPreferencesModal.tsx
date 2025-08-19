@@ -18,6 +18,7 @@ interface UserPreferences {
   exclude_keywords: string[];
   preferred_disciplines: string[];
   preferred_fields: string[];
+  followed_ticker_symbols: string[];
   followed_journals: string[];
   excluded_journals: string[];
   keyword_logic: 'OR' | 'AND';
@@ -42,7 +43,9 @@ export const UserPreferencesModal = ({
   const [loading, setLoading] = useState(false);
   const [availableDisciplines, setAvailableDisciplines] = useState<string[]>([]);
   const [availableFields, setAvailableFields] = useState<string[]>([]);
-  const [availableJournals, setAvailableJournals] = useState<string[]>([]);
+  const [availableTickerSymbols, setAvailableTickerSymbols] = useState<string[]>([]);
+  const [journalsForTicker, setJournalsForTicker] = useState<string[]>([]);
+  const [selectedTickerForJournals, setSelectedTickerForJournals] = useState<string>('');
   const [newKeyword, setNewKeyword] = useState('');
   const [newExcludeKeyword, setNewExcludeKeyword] = useState('');
   
@@ -51,6 +54,7 @@ export const UserPreferencesModal = ({
     exclude_keywords: [],
     preferred_disciplines: [],
     preferred_fields: [],
+    followed_ticker_symbols: [],
     followed_journals: [],
     excluded_journals: [],
     keyword_logic: 'OR'
@@ -82,21 +86,41 @@ export const UserPreferencesModal = ({
         .select('level_2_field')
         .not('level_2_field', 'is', null);
 
-      // Fetch available journals
-      const { data: journals } = await supabase
+      // Fetch available ticker symbols (limit to 15)
+      const { data: tickers } = await supabase
         .from('articles_with_metadata')
-        .select('journal_name')
-        .not('journal_name', 'is', null);
+        .select('ticker_symbol')
+        .not('ticker_symbol', 'is', null);
 
       const uniqueDisciplines = [...new Set(disciplines?.map(d => d.level_1_discipline).filter(Boolean))] as string[];
       const uniqueFields = [...new Set(fields?.map(f => f.level_2_field).filter(Boolean))] as string[];
-      const uniqueJournals = [...new Set(journals?.map(j => j.journal_name).filter(Boolean))] as string[];
+      const uniqueTickerSymbols = [...new Set(tickers?.map(t => t.ticker_symbol).filter(Boolean))] as string[];
 
       setAvailableDisciplines(uniqueDisciplines.sort());
       setAvailableFields(uniqueFields.sort());
-      setAvailableJournals(uniqueJournals.sort());
+      setAvailableTickerSymbols(uniqueTickerSymbols.sort().slice(0, 15));
     } catch (error) {
       console.error('Error fetching options:', error);
+    }
+  };
+
+  const fetchJournalsForTicker = async (tickerSymbol: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('articles_with_metadata')
+        .select('journal_name')
+        .eq('ticker_symbol', tickerSymbol)
+        .not('journal_name', 'is', null);
+
+      if (error) {
+        console.error('Error fetching journals for ticker:', error);
+        return;
+      }
+
+      const uniqueJournals = [...new Set(data?.map(d => d.journal_name).filter(Boolean))] as string[];
+      setJournalsForTicker(uniqueJournals.sort());
+    } catch (error) {
+      console.error('Error fetching journals for ticker:', error);
     }
   };
 
@@ -144,6 +168,15 @@ export const UserPreferencesModal = ({
     }));
   };
 
+  const toggleTickerSymbol = (ticker: string) => {
+    setPreferences(prev => ({
+      ...prev,
+      followed_ticker_symbols: prev.followed_ticker_symbols.includes(ticker)
+        ? prev.followed_ticker_symbols.filter(t => t !== ticker)
+        : [...prev.followed_ticker_symbols, ticker]
+    }));
+  };
+
   const toggleJournal = (journal: string, type: 'follow' | 'exclude') => {
     const key = type === 'follow' ? 'followed_journals' : 'excluded_journals';
     setPreferences(prev => ({
@@ -152,6 +185,15 @@ export const UserPreferencesModal = ({
         ? prev[key].filter(j => j !== journal)
         : [...prev[key], journal]
     }));
+  };
+
+  const handleTickerSelectionForJournals = (ticker: string) => {
+    setSelectedTickerForJournals(ticker);
+    if (ticker) {
+      fetchJournalsForTicker(ticker);
+    } else {
+      setJournalsForTicker([]);
+    }
   };
 
   const savePreferences = async () => {
@@ -208,6 +250,7 @@ export const UserPreferencesModal = ({
         exclude_keywords: [],
         preferred_disciplines: [],
         preferred_fields: [],
+        followed_ticker_symbols: [],
         followed_journals: [],
         excluded_journals: [],
         keyword_logic: 'OR'
@@ -357,20 +400,20 @@ export const UserPreferencesModal = ({
           <TabsContent value="journals" className="space-y-4">
             <div className="space-y-4">
               <div>
-                <Label>Followed Journals</Label>
+                <Label>Ticker Symbols</Label>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Show articles only from these journals (if any selected)
+                  Select ticker symbols you're interested in
                 </p>
-                <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
-                  {availableJournals.slice(0, 50).map((journal) => (
-                    <div key={journal} className="flex items-center space-x-2">
+                <div className="grid grid-cols-2 gap-2 mt-2 max-h-32 overflow-y-auto">
+                  {availableTickerSymbols.map((ticker) => (
+                    <div key={ticker} className="flex items-center space-x-2">
                       <Checkbox
-                        id={`follow-${journal}`}
-                        checked={preferences.followed_journals.includes(journal)}
-                        onCheckedChange={() => toggleJournal(journal, 'follow')}
+                        id={`ticker-${ticker}`}
+                        checked={preferences.followed_ticker_symbols.includes(ticker)}
+                        onCheckedChange={() => toggleTickerSymbol(ticker)}
                       />
-                      <Label htmlFor={`follow-${journal}`} className="text-sm">
-                        {journal}
+                      <Label htmlFor={`ticker-${ticker}`} className="text-sm">
+                        {ticker}
                       </Label>
                     </div>
                   ))}
@@ -378,24 +421,65 @@ export const UserPreferencesModal = ({
               </div>
 
               <div>
+                <Label>Followed Journals</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  First select a ticker symbol to see associated journals
+                </p>
+                <Select
+                  value={selectedTickerForJournals}
+                  onValueChange={handleTickerSelectionForJournals}
+                >
+                  <SelectTrigger className="mb-4">
+                    <SelectValue placeholder="Select ticker symbol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableTickerSymbols.map((ticker) => (
+                      <SelectItem key={ticker} value={ticker}>
+                        {ticker}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {selectedTickerForJournals && journalsForTicker.length > 0 && (
+                  <div className="grid grid-cols-1 gap-2 mt-2 max-h-32 overflow-y-auto">
+                    {journalsForTicker.map((journal) => (
+                      <div key={journal} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`follow-${journal}`}
+                          checked={preferences.followed_journals.includes(journal)}
+                          onCheckedChange={() => toggleJournal(journal, 'follow')}
+                        />
+                        <Label htmlFor={`follow-${journal}`} className="text-sm">
+                          {journal}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
                 <Label>Excluded Journals</Label>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Never show articles from these journals
+                  Select a ticker symbol first, then choose journals to exclude
                 </p>
-                <div className="grid grid-cols-1 gap-2 mt-2 max-h-40 overflow-y-auto">
-                  {availableJournals.slice(0, 50).map((journal) => (
-                    <div key={journal} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`exclude-${journal}`}
-                        checked={preferences.excluded_journals.includes(journal)}
-                        onCheckedChange={() => toggleJournal(journal, 'exclude')}
-                      />
-                      <Label htmlFor={`exclude-${journal}`} className="text-sm">
-                        {journal}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+                {selectedTickerForJournals && journalsForTicker.length > 0 && (
+                  <div className="grid grid-cols-1 gap-2 mt-2 max-h-32 overflow-y-auto">
+                    {journalsForTicker.map((journal) => (
+                      <div key={journal} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`exclude-${journal}`}
+                          checked={preferences.excluded_journals.includes(journal)}
+                          onCheckedChange={() => toggleJournal(journal, 'exclude')}
+                        />
+                        <Label htmlFor={`exclude-${journal}`} className="text-sm">
+                          {journal}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>

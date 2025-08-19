@@ -31,6 +31,7 @@ interface UserPreferences {
   exclude_keywords: string[];
   preferred_disciplines: string[];
   preferred_fields: string[];
+  followed_ticker_symbols: string[];
   followed_journals: string[];
   excluded_journals: string[];
   keyword_logic: 'OR' | 'AND';
@@ -105,7 +106,8 @@ export const DiscoveryFilters = ({
       }
 
       const uniqueSymbols = [...new Set(data?.map(d => d.ticker_symbol).filter(Boolean))] as string[];
-      setTickerSymbols(uniqueSymbols.sort());
+      // Limit to top 15 ticker symbols
+      setTickerSymbols(uniqueSymbols.sort().slice(0, 15));
     } catch (error) {
       console.error('Error fetching ticker symbols:', error);
     }
