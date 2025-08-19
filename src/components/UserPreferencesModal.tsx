@@ -86,19 +86,20 @@ export const UserPreferencesModal = ({
         .select('level_2_field')
         .not('level_2_field', 'is', null);
 
-      // Fetch available ticker symbols (limit to 15)
-      const { data: tickers } = await supabase
-        .from('articles_with_metadata')
-        .select('ticker_symbol')
-        .not('ticker_symbol', 'is', null);
+      // Fetch available ticker symbols from publishers table
+      const { data: publishers } = await supabase
+        .from('publishers' as any)
+        .select('ticker_symbol, full_name')
+        .eq('is_active', true)
+        .order('sort_order');
 
       const uniqueDisciplines = [...new Set(disciplines?.map(d => d.level_1_discipline).filter(Boolean))] as string[];
       const uniqueFields = [...new Set(fields?.map(f => f.level_2_field).filter(Boolean))] as string[];
-      const uniqueTickerSymbols = [...new Set(tickers?.map(t => t.ticker_symbol).filter(Boolean))] as string[];
+      const publisherData = (publishers as any[]) || [];
 
       setAvailableDisciplines(uniqueDisciplines.sort());
       setAvailableFields(uniqueFields.sort());
-      setAvailableTickerSymbols(uniqueTickerSymbols.sort().slice(0, 15));
+      setAvailableTickerSymbols(publisherData.map(p => p.ticker_symbol));
     } catch (error) {
       console.error('Error fetching options:', error);
     }

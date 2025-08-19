@@ -21,6 +21,11 @@ interface FilterState {
   dateTo: Date | undefined;
 }
 
+interface Publisher {
+  ticker_symbol: string;
+  full_name: string;
+}
+
 interface DiscoveryFiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: Partial<FilterState>) => void;
@@ -56,6 +61,7 @@ export const DiscoveryFilters = ({
   user 
 }: DiscoveryFiltersPropsWithPrefs) => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [publishers, setPublishers] = useState<Publisher[]>([]);
   const [tickerSymbols, setTickerSymbols] = useState<string[]>([]);
   const [journalsForTicker, setJournalsForTicker] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,26 +102,22 @@ export const DiscoveryFilters = ({
   const fetchTickerSymbols = async () => {
     try {
       const { data, error } = await supabase
-        .from('articles_with_metadata')
-        .select('ticker_symbol')
-        .not('ticker_symbol', 'is', null);
+        .from('publishers' as any)
+        .select('ticker_symbol, full_name')
+        .eq('is_active', true)
+        .order('sort_order');
 
       if (error) {
-        console.error('Error fetching ticker symbols:', error);
+        console.error('Error fetching publishers:', error);
         return;
       }
 
-      console.log('Raw ticker symbol data:', data);
-      console.log('Total records with ticker symbols:', data?.length);
-
-      const uniqueSymbols = [...new Set(data?.map(d => d.ticker_symbol).filter(Boolean))] as string[];
-      console.log('Unique ticker symbols found:', uniqueSymbols);
-      console.log('Total unique ticker symbols:', uniqueSymbols.length);
-      
-      // Get all unique ticker symbols without artificial limitation
-      setTickerSymbols(uniqueSymbols.sort());
+      // Store publishers for display labels and ticker symbols for filtering
+      const publisherData = (data as unknown as Publisher[]) || [];
+      setPublishers(publisherData);
+      setTickerSymbols(publisherData.map(p => p.ticker_symbol));
     } catch (error) {
-      console.error('Error fetching ticker symbols:', error);
+      console.error('Error fetching publishers:', error);
     }
   };
 
@@ -262,9 +264,9 @@ export const DiscoveryFilters = ({
               <SelectValue placeholder="Select ticker symbol" />
             </SelectTrigger>
             <SelectContent>
-              {tickerSymbols.map((symbol) => (
-                <SelectItem key={symbol} value={symbol}>
-                  {symbol}
+              {publishers.map((publisher) => (
+                <SelectItem key={publisher.ticker_symbol} value={publisher.ticker_symbol}>
+                  {publisher.full_name} ({publisher.ticker_symbol})
                 </SelectItem>
               ))}
             </SelectContent>
