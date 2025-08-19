@@ -106,8 +106,8 @@ export const DiscoveryFilters = ({
       }
 
       const uniqueSymbols = [...new Set(data?.map(d => d.ticker_symbol).filter(Boolean))] as string[];
-      // Limit to top 15 ticker symbols
-      setTickerSymbols(uniqueSymbols.sort().slice(0, 15));
+      // Get all unique ticker symbols without artificial limitation
+      setTickerSymbols(uniqueSymbols.sort());
     } catch (error) {
       console.error('Error fetching ticker symbols:', error);
     }

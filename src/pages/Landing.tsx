@@ -30,16 +30,8 @@ const Landing = () => {
   const fetchRecentArticles = async () => {
     try {
       const { data, error } = await supabase
-        .from('articles')
-        .select(`
-          *,
-          article_tags(
-            tags(name)
-          ),
-          article_categories(
-            categories(level_1_discipline, level_2_field)
-          )
-        `)
+        .from('articles_with_metadata')
+        .select('*')
         .order('publication_date', { ascending: false })
         .limit(6);
 
@@ -48,13 +40,14 @@ const Landing = () => {
         return;
       }
 
+      // Transform to match expected Article interface
       const transformedArticles = (data || []).map(article => ({
         ...article,
-        tags: article.article_tags?.map((tagMap: any) => ({ name: tagMap.tags?.name })).filter(Boolean) || [],
-        categories: article.article_categories?.map((catMap: any) => ({
-          level_1_discipline: catMap.categories?.level_1_discipline,
-          level_2_field: catMap.categories?.level_2_field
-        })).filter(Boolean) || []
+        tags: article.combined_tags?.map((tag: string) => ({ name: tag })) || [],
+        categories: [{
+          level_1_discipline: article.level_1_discipline,
+          level_2_field: article.level_2_field
+        }].filter(Boolean)
       }));
 
       setRecentArticles(transformedArticles);
