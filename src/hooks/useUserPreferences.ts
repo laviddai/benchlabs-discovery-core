@@ -36,7 +36,7 @@ export const useUserPreferences = () => {
         .from('user_preferences')
         .select('discovery_feed_settings')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching preferences:', error);

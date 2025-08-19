@@ -114,23 +114,28 @@ const DiscoveryArticles = () => {
 
       // Apply user preferences if available
       if (preferences && user) {
-        // Apply discipline preferences
+        // Apply discipline preferences (only if no manual filter is set)
         if (preferences.preferred_disciplines.length > 0 && !filters.selectedDiscipline) {
           query = query.in('level_1_discipline', preferences.preferred_disciplines);
         }
         
-        // Apply field preferences  
+        // Apply field preferences (only if no manual filter is set)
         if (preferences.preferred_fields.length > 0 && !filters.selectedField) {
           query = query.in('level_2_field', preferences.preferred_fields);
         }
 
-        // Apply journal preferences
-        if (preferences.followed_journals.length > 0) {
+        // Apply ticker symbol preferences (only if no manual filter is set)
+        if (preferences.followed_ticker_symbols.length > 0 && !filters.selectedTickerSymbol) {
+          query = query.in('ticker_symbol', preferences.followed_ticker_symbols);
+        }
+
+        // Apply journal preferences (only if no manual filter is set)
+        if (preferences.followed_journals.length > 0 && !filters.selectedJournal) {
           query = query.in('journal_name', preferences.followed_journals);
         }
         
-        // Apply journal exclusions
-        if (preferences.excluded_journals.length > 0) {
+        // Apply journal exclusions (always applied unless manual journal filter is set)
+        if (preferences.excluded_journals.length > 0 && !filters.selectedJournal) {
           query = query.not('journal_name', 'in', `(${preferences.excluded_journals.map(j => `"${j}"`).join(',')})`);
         }
       }
@@ -194,6 +199,7 @@ const DiscoveryArticles = () => {
     preferences.exclude_keywords.length > 0 ||
     preferences.preferred_disciplines.length > 0 ||
     preferences.preferred_fields.length > 0 ||
+    preferences.followed_ticker_symbols.length > 0 ||
     preferences.followed_journals.length > 0 ||
     preferences.excluded_journals.length > 0
   );
