@@ -3,11 +3,15 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { DiscoveryArticleCard } from '@/components/DiscoveryArticleCard';
 import { DiscoveryFilters } from '@/components/DiscoveryFilters';
+import { UserPreferencesModal } from '@/components/UserPreferencesModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, ChevronLeft, ChevronRight, ArrowLeft, Filter, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Article {
   id: string;
@@ -37,8 +41,21 @@ interface FilterState {
   dateTo: Date | undefined;
 }
 
+interface UserPreferences {
+  include_keywords: string[];
+  exclude_keywords: string[];
+  preferred_disciplines: string[];
+  preferred_fields: string[];
+  followed_journals: string[];
+  excluded_journals: string[];
+  keyword_logic: 'OR' | 'AND';
+}
+
 const DiscoveryArticles = () => {
+  const { user } = useAuth();
+  const { preferences, updatePreferences } = useUserPreferences();
   const [articles, setArticles] = useState<Article[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: '',
@@ -48,33 +65,29 @@ const DiscoveryArticles = () => {
     dateTo: undefined
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const articlesPerPage = 12;
+  const articlesPerPage = 20;
 
   useEffect(() => {
     fetchArticles();
-  }, [filters.selectedDiscipline, filters.selectedField, filters.dateFrom, filters.dateTo]);
+  }, [filters.selectedDiscipline, filters.selectedField, filters.dateFrom, filters.dateTo, filters.searchQuery, preferences, currentPage]);
 
   const fetchArticles = async () => {
     setLoading(true);
     
     try {
-      // Query the articles_with_metadata view directly
+      // Build the base query with proper pagination
       let query = supabase
         .from('articles_with_metadata')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('publication_date', { ascending: false });
 
-      // Apply discipline filter
+      // Apply manual filters first
       if (filters.selectedDiscipline) {
         query = query.eq('level_1_discipline', filters.selectedDiscipline);
       }
-
-      // Apply field filter
       if (filters.selectedField) {
         query = query.eq('level_2_field', filters.selectedField);
       }
-
-      // Apply date range filter
       if (filters.dateFrom) {
         query = query.gte('publication_date', filters.dateFrom.toISOString());
       }
@@ -82,15 +95,80 @@ const DiscoveryArticles = () => {
         query = query.lte('publication_date', filters.dateTo.toISOString());
       }
 
-      const { data, error } = await query;
+      // Apply search filter if provided
+      if (filters.searchQuery.trim()) {
+        const searchTerm = `%${filters.searchQuery.trim()}%`;
+        query = query.or(`title.ilike.${searchTerm},summary.ilike.${searchTerm},author.ilike.${searchTerm},journal_name.ilike.${searchTerm}`);
+      }
+
+      // Apply user preferences if available
+      if (preferences && user) {
+        // Apply discipline preferences
+        if (preferences.preferred_disciplines.length > 0 && !filters.selectedDiscipline) {
+          query = query.in('level_1_discipline', preferences.preferred_disciplines);
+        }
+        
+        // Apply field preferences  
+        if (preferences.preferred_fields.length > 0 && !filters.selectedField) {
+          query = query.in('level_2_field', preferences.preferred_fields);
+        }
+
+        // Apply journal preferences
+        if (preferences.followed_journals.length > 0) {
+          query = query.in('journal_name', preferences.followed_journals);
+        }
+        
+        // Apply journal exclusions
+        if (preferences.excluded_journals.length > 0) {
+          query = query.not('journal_name', 'in', `(${preferences.excluded_journals.map(j => `"${j}"`).join(',')})`);
+        }
+      }
+
+      // Apply pagination
+      const startIndex = (currentPage - 1) * articlesPerPage;
+      query = query.range(startIndex, startIndex + articlesPerPage - 1);
+
+      const { data, error, count } = await query;
 
       if (error) {
         console.error('Error fetching articles:', error);
         return;
       }
 
-      // The data is already in the correct format from the view
-      setArticles(data || []);
+      // Filter by keywords client-side for more flexible matching
+      let filteredData = data || [];
+      
+      if (preferences && user) {
+        // Apply keyword filters
+        if (preferences.include_keywords.length > 0) {
+          filteredData = filteredData.filter(article => {
+            const text = `${article.title || ''} ${article.summary || ''} ${(article.combined_tags || []).join(' ')}`.toLowerCase();
+            
+            if (preferences.keyword_logic === 'AND') {
+              return preferences.include_keywords.every(keyword => 
+                text.includes(keyword.toLowerCase())
+              );
+            } else {
+              return preferences.include_keywords.some(keyword => 
+                text.includes(keyword.toLowerCase())
+              );
+            }
+          });
+        }
+
+        // Apply keyword exclusions
+        if (preferences.exclude_keywords.length > 0) {
+          filteredData = filteredData.filter(article => {
+            const text = `${article.title || ''} ${article.summary || ''} ${(article.combined_tags || []).join(' ')}`.toLowerCase();
+            return !preferences.exclude_keywords.some(keyword => 
+              text.includes(keyword.toLowerCase())
+            );
+          });
+        }
+      }
+
+      setArticles(filteredData);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching articles:', error);
     } finally {
@@ -98,18 +176,19 @@ const DiscoveryArticles = () => {
     }
   };
 
-  // Filter articles based on search query
-  const filteredArticles = articles.filter(article =>
-    filters.searchQuery === '' ||
-    article.title?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-    article.summary?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-    article.author?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-    article.journal_name?.toLowerCase().includes(filters.searchQuery.toLowerCase())
+  const totalPages = Math.ceil(totalCount / articlesPerPage);
+  
+  const hasActivePreferences = preferences && (
+    preferences.include_keywords.length > 0 ||
+    preferences.exclude_keywords.length > 0 ||
+    preferences.preferred_disciplines.length > 0 ||
+    preferences.preferred_fields.length > 0 ||
+    preferences.followed_journals.length > 0 ||
+    preferences.excluded_journals.length > 0
   );
 
-  const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
-  const startIndex = (currentPage - 1) * articlesPerPage;
-  const paginatedArticles = filteredArticles.slice(startIndex, startIndex + articlesPerPage);
+  const hasActiveFilters = filters.selectedDiscipline || filters.selectedField || 
+    filters.dateFrom || filters.dateTo || filters.searchQuery;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -121,6 +200,17 @@ const DiscoveryArticles = () => {
     setCurrentPage(1); // Reset to first page when filters change
   };
 
+  const clearAllFilters = () => {
+    setFilters({
+      searchQuery: '',
+      selectedDiscipline: '',
+      selectedField: '',
+      dateFrom: undefined,
+      dateTo: undefined
+    });
+    setCurrentPage(1);
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -128,13 +218,28 @@ const DiscoveryArticles = () => {
         <main className="flex-1 bg-background">
           <header className="h-14 border-b bg-background flex items-center px-4">
             <SidebarTrigger />
-            <div className="ml-4 flex items-center space-x-4">
+            <div className="ml-4 flex items-center space-x-4 flex-1">
               <Link to="/discovery" className="flex items-center text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Discovery
               </Link>
               <span className="text-muted-foreground">/</span>
               <h1 className="text-lg font-semibold">Recent Articles</h1>
+              
+              {hasActivePreferences && (
+                <Badge variant="secondary" className="ml-4">
+                  Personalized for you
+                </Badge>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {user && (
+                <UserPreferencesModal 
+                  onPreferencesChange={updatePreferences}
+                  currentPreferences={preferences}
+                />
+              )}
             </div>
           </header>
 
@@ -151,23 +256,69 @@ const DiscoveryArticles = () => {
             <div className="flex-1 p-6 max-w-7xl">
               {/* Search Bar */}
               <div className="mb-6">
-                <div className="relative max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search articles, authors, or journals..."
-                    value={filters.searchQuery}
-                    onChange={(e) => handleFiltersChange({ searchQuery: e.target.value })}
-                    className="pl-10"
-                  />
+                <div className="flex gap-4 items-center">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search articles, authors, or journals..."
+                      value={filters.searchQuery}
+                      onChange={(e) => handleFiltersChange({ searchQuery: e.target.value })}
+                      className="pl-10"
+                    />
+                  </div>
+                  
+                  {hasActiveFilters && (
+                    <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                      <X className="h-4 w-4 mr-2" />
+                      Clear Filters
+                    </Button>
+                  )}
                 </div>
               </div>
+
+              {/* Active Preferences Summary */}
+              {hasActivePreferences && (
+                <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      <span className="text-sm font-medium">Active Preferences:</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {preferences?.include_keywords.slice(0, 3).map((keyword, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        +{keyword}
+                      </Badge>
+                    ))}
+                    {preferences?.include_keywords && preferences.include_keywords.length > 3 && (
+                      <Badge variant="secondary" className="text-xs">
+                        +{preferences.include_keywords.length - 3} more keywords
+                      </Badge>
+                    )}
+                    {preferences?.preferred_disciplines.slice(0, 2).map((discipline, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {discipline}
+                      </Badge>
+                    ))}
+                    {preferences?.preferred_disciplines && preferences.preferred_disciplines.length > 2 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{preferences.preferred_disciplines.length - 2} more fields
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Results Summary */}
               <div className="mb-6">
                 <p className="text-sm text-muted-foreground">
-                  {loading ? 'Loading...' : `${filteredArticles.length} articles found`}
-                  {(filters.selectedDiscipline || filters.selectedField || filters.dateFrom || filters.dateTo) && (
-                    <span> (filtered)</span>
+                  {loading ? 'Loading...' : (
+                    <>
+                      Showing {((currentPage - 1) * articlesPerPage) + 1}-{Math.min(currentPage * articlesPerPage, totalCount)} of {totalCount.toLocaleString()} articles
+                      {hasActiveFilters && <span> (filtered)</span>}
+                      {hasActivePreferences && <span> (personalized)</span>}
+                    </>
                   )}
                 </p>
               </div>
@@ -182,7 +333,7 @@ const DiscoveryArticles = () => {
               ) : (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {paginatedArticles.map((article) => (
+                    {articles.map((article) => (
                       <DiscoveryArticleCard key={article.id} article={article} />
                     ))}
                   </div>
@@ -241,7 +392,7 @@ const DiscoveryArticles = () => {
                 </>
               )}
 
-              {!loading && filteredArticles.length === 0 && (
+              {!loading && articles.length === 0 && (
                 <div className="text-center py-12">
                   <h3 className="text-lg font-medium mb-2">No articles found</h3>
                   <p className="text-muted-foreground">
