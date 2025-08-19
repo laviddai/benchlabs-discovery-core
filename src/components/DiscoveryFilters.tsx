@@ -5,15 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
-import { CalendarIcon, X } from 'lucide-react';
+import { CalendarIcon, X, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { UserPreferencesModal } from '@/components/UserPreferencesModal';
 
 interface FilterState {
   searchQuery: string;
   selectedDiscipline: string;
   selectedField: string;
+  selectedTickerSymbol: string;
+  selectedJournal: string;
   dateFrom: Date | undefined;
   dateTo: Date | undefined;
 }
@@ -23,18 +26,51 @@ interface DiscoveryFiltersProps {
   onFiltersChange: (filters: Partial<FilterState>) => void;
 }
 
+interface UserPreferences {
+  include_keywords: string[];
+  exclude_keywords: string[];
+  preferred_disciplines: string[];
+  preferred_fields: string[];
+  followed_journals: string[];
+  excluded_journals: string[];
+  keyword_logic: 'OR' | 'AND';
+}
+
+interface DiscoveryFiltersPropsWithPrefs extends DiscoveryFiltersProps {
+  onPreferencesChange?: (preferences: UserPreferences | null) => void;
+  currentPreferences?: UserPreferences | null;
+  user?: any;
+}
+
 interface Category {
   level_1_discipline: string;
   level_2_field: string;
 }
 
-export const DiscoveryFilters = ({ filters, onFiltersChange }: DiscoveryFiltersProps) => {
+export const DiscoveryFilters = ({ 
+  filters, 
+  onFiltersChange, 
+  onPreferencesChange, 
+  currentPreferences, 
+  user 
+}: DiscoveryFiltersPropsWithPrefs) => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [tickerSymbols, setTickerSymbols] = useState<string[]>([]);
+  const [journalsForTicker, setJournalsForTicker] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchCategories();
+    fetchTickerSymbols();
   }, []);
+
+  useEffect(() => {
+    if (filters.selectedTickerSymbol) {
+      fetchJournalsForTicker(filters.selectedTickerSymbol);
+    } else {
+      setJournalsForTicker([]);
+    }
+  }, [filters.selectedTickerSymbol]);
 
   const fetchCategories = async () => {
     try {
@@ -56,6 +92,45 @@ export const DiscoveryFilters = ({ filters, onFiltersChange }: DiscoveryFiltersP
     }
   };
 
+  const fetchTickerSymbols = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('articles_with_metadata')
+        .select('ticker_symbol')
+        .not('ticker_symbol', 'is', null);
+
+      if (error) {
+        console.error('Error fetching ticker symbols:', error);
+        return;
+      }
+
+      const uniqueSymbols = [...new Set(data?.map(d => d.ticker_symbol).filter(Boolean))] as string[];
+      setTickerSymbols(uniqueSymbols.sort());
+    } catch (error) {
+      console.error('Error fetching ticker symbols:', error);
+    }
+  };
+
+  const fetchJournalsForTicker = async (tickerSymbol: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('articles_with_metadata')
+        .select('journal_name')
+        .eq('ticker_symbol', tickerSymbol)
+        .not('journal_name', 'is', null);
+
+      if (error) {
+        console.error('Error fetching journals for ticker:', error);
+        return;
+      }
+
+      const uniqueJournals = [...new Set(data?.map(d => d.journal_name).filter(Boolean))] as string[];
+      setJournalsForTicker(uniqueJournals.sort());
+    } catch (error) {
+      console.error('Error fetching journals for ticker:', error);
+    }
+  };
+
   // Get unique disciplines
   const disciplines = Array.from(new Set(categories.map(c => c.level_1_discipline))).sort();
   
@@ -72,27 +147,47 @@ export const DiscoveryFilters = ({ filters, onFiltersChange }: DiscoveryFiltersP
     });
   };
 
+  const handleTickerSymbolChange = (tickerSymbol: string) => {
+    onFiltersChange({
+      selectedTickerSymbol: tickerSymbol,
+      selectedJournal: '' // Reset journal when ticker changes
+    });
+  };
+
   const clearAllFilters = () => {
     onFiltersChange({
       selectedDiscipline: '',
       selectedField: '',
+      selectedTickerSymbol: '',
+      selectedJournal: '',
       dateFrom: undefined,
       dateTo: undefined
     });
   };
 
-  const hasActiveFilters = filters.selectedDiscipline || filters.selectedField || filters.dateFrom || filters.dateTo;
+  const hasActiveFilters = filters.selectedDiscipline || filters.selectedField || 
+    filters.selectedTickerSymbol || filters.selectedJournal || filters.dateFrom || filters.dateTo;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Filters</h3>
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-            <X className="h-4 w-4 mr-1" />
-            Clear All
-          </Button>
-        )}
+        <div className="flex items-center space-x-2">
+          {user && onPreferencesChange && (
+            <UserPreferencesModal 
+              onPreferencesChange={onPreferencesChange}
+              currentPreferences={currentPreferences}
+              triggerButtonText="Customize feed"
+              triggerButtonIcon={<Settings className="h-4 w-4" />}
+            />
+          )}
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+              <X className="h-4 w-4 mr-1" />
+              Clear All
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Main Category Filter */}
@@ -137,6 +232,56 @@ export const DiscoveryFilters = ({ filters, onFiltersChange }: DiscoveryFiltersP
                 {uniqueFields.map((field) => (
                   <SelectItem key={field} value={field}>
                     {field}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Ticker Symbol Filter */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Ticker Symbol</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select
+            value={filters.selectedTickerSymbol}
+            onValueChange={handleTickerSymbolChange}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select ticker symbol" />
+            </SelectTrigger>
+            <SelectContent>
+              {tickerSymbols.map((symbol) => (
+                <SelectItem key={symbol} value={symbol}>
+                  {symbol}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      {/* Associated Journal Filter */}
+      {filters.selectedTickerSymbol && journalsForTicker.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Associated Journal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select
+              value={filters.selectedJournal}
+              onValueChange={(journal) => onFiltersChange({ selectedJournal: journal })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select journal" />
+              </SelectTrigger>
+              <SelectContent>
+                {journalsForTicker.map((journal) => (
+                  <SelectItem key={journal} value={journal}>
+                    {journal}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -225,6 +370,18 @@ export const DiscoveryFilters = ({ filters, onFiltersChange }: DiscoveryFiltersP
                 <div className="flex items-center justify-between">
                   <span>Field:</span>
                   <span className="font-medium">{filters.selectedField}</span>
+                </div>
+              )}
+              {filters.selectedTickerSymbol && (
+                <div className="flex items-center justify-between">
+                  <span>Ticker:</span>
+                  <span className="font-medium">{filters.selectedTickerSymbol}</span>
+                </div>
+              )}
+              {filters.selectedJournal && (
+                <div className="flex items-center justify-between">
+                  <span>Journal:</span>
+                  <span className="font-medium">{filters.selectedJournal}</span>
                 </div>
               )}
               {filters.dateFrom && (

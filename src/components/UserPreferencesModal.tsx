@@ -26,9 +26,16 @@ interface UserPreferences {
 interface UserPreferencesModalProps {
   onPreferencesChange: (preferences: UserPreferences | null) => void;
   currentPreferences: UserPreferences | null;
+  triggerButtonText?: string;
+  triggerButtonIcon?: React.ReactNode;
 }
 
-export const UserPreferencesModal = ({ onPreferencesChange, currentPreferences }: UserPreferencesModalProps) => {
+export const UserPreferencesModal = ({ 
+  onPreferencesChange, 
+  currentPreferences, 
+  triggerButtonText = "Preferences",
+  triggerButtonIcon = <Settings className="h-4 w-4 mr-2" />
+}: UserPreferencesModalProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -228,8 +235,8 @@ export const UserPreferencesModal = ({ onPreferencesChange, currentPreferences }
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Settings className="h-4 w-4 mr-2" />
-          Preferences
+          {triggerButtonIcon}
+          {triggerButtonText}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">

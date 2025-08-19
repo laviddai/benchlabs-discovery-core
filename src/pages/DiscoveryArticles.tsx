@@ -37,6 +37,8 @@ interface FilterState {
   searchQuery: string;
   selectedDiscipline: string;
   selectedField: string;
+  selectedTickerSymbol: string;
+  selectedJournal: string;
   dateFrom: Date | undefined;
   dateTo: Date | undefined;
 }
@@ -61,6 +63,8 @@ const DiscoveryArticles = () => {
     searchQuery: '',
     selectedDiscipline: '',
     selectedField: '',
+    selectedTickerSymbol: '',
+    selectedJournal: '',
     dateFrom: undefined,
     dateTo: undefined
   });
@@ -69,7 +73,7 @@ const DiscoveryArticles = () => {
 
   useEffect(() => {
     fetchArticles();
-  }, [filters.selectedDiscipline, filters.selectedField, filters.dateFrom, filters.dateTo, filters.searchQuery, preferences, currentPage]);
+  }, [filters.selectedDiscipline, filters.selectedField, filters.selectedTickerSymbol, filters.selectedJournal, filters.dateFrom, filters.dateTo, filters.searchQuery, preferences, currentPage]);
 
   const fetchArticles = async () => {
     setLoading(true);
@@ -87,6 +91,12 @@ const DiscoveryArticles = () => {
       }
       if (filters.selectedField) {
         query = query.eq('level_2_field', filters.selectedField);
+      }
+      if (filters.selectedTickerSymbol) {
+        query = query.eq('ticker_symbol', filters.selectedTickerSymbol);
+      }
+      if (filters.selectedJournal) {
+        query = query.eq('journal_name', filters.selectedJournal);
       }
       if (filters.dateFrom) {
         query = query.gte('publication_date', filters.dateFrom.toISOString());
@@ -188,7 +198,7 @@ const DiscoveryArticles = () => {
   );
 
   const hasActiveFilters = filters.selectedDiscipline || filters.selectedField || 
-    filters.dateFrom || filters.dateTo || filters.searchQuery;
+    filters.selectedTickerSymbol || filters.selectedJournal || filters.dateFrom || filters.dateTo || filters.searchQuery;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -205,6 +215,8 @@ const DiscoveryArticles = () => {
       searchQuery: '',
       selectedDiscipline: '',
       selectedField: '',
+      selectedTickerSymbol: '',
+      selectedJournal: '',
       dateFrom: undefined,
       dateTo: undefined
     });
@@ -234,12 +246,7 @@ const DiscoveryArticles = () => {
             </div>
             
             <div className="flex items-center space-x-2">
-              {user && (
-                <UserPreferencesModal 
-                  onPreferencesChange={updatePreferences}
-                  currentPreferences={preferences}
-                />
-              )}
+              {/* Moved to filter section */}
             </div>
           </header>
 
@@ -249,6 +256,9 @@ const DiscoveryArticles = () => {
               <DiscoveryFilters
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
+                onPreferencesChange={updatePreferences}
+                currentPreferences={preferences}
+                user={user}
               />
             </div>
 
