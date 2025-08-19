@@ -98,16 +98,18 @@ export const DiscoveryFilters = ({
       const { data, error } = await supabase
         .from('articles_with_metadata')
         .select('ticker_symbol')
-        .not('ticker_symbol', 'is', null);
+        .not('ticker_symbol', 'is', null)
+        .order('ticker_symbol');
 
       if (error) {
         console.error('Error fetching ticker symbols:', error);
         return;
       }
 
+      // Get all unique ticker symbols (should be exactly 15)
       const uniqueSymbols = [...new Set(data?.map(d => d.ticker_symbol).filter(Boolean))] as string[];
-      // Limit to top 15 ticker symbols
-      setTickerSymbols(uniqueSymbols.sort().slice(0, 15));
+      console.log('Found ticker symbols:', uniqueSymbols.length, uniqueSymbols);
+      setTickerSymbols(uniqueSymbols.sort());
     } catch (error) {
       console.error('Error fetching ticker symbols:', error);
     }
